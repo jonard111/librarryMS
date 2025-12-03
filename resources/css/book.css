@@ -1,0 +1,234 @@
+/* ===========================
+   ROOT COLORS (DNSC THEME)
+=========================== */
+:root {
+  --green-main: #047857; /* Deep green */
+  --green-dark: #065f46;
+  --yellow-accent: #047857;
+  --blue-dark: #1e3a8a;
+  --text-dark: #111827;
+  --text-muted: #6b7280;
+  --bg-light: #f8fafc;
+  --shadow-lg: 0 4px 10px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* ===========================
+   GENERAL RESET
+=========================== */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-light);
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+/* ===========================
+   SIDEBAR
+=========================== */
+.sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--green-main), var(--green-dark));
+  color: #fff;
+  padding: 1.5rem 1rem;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1030;
+  transition: all 0.3s ease;
+}
+
+.sidebar h2 {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.sidebar .nav-link {
+  color: #e0f2f1;
+  margin: 0.4rem 0;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* ===========================
+   CONTENT AREA
+=========================== */
+.content {
+  margin-left: 250px;
+  padding: 1.5rem;
+  transition: margin-left 0.3s ease;
+}
+
+.top-header {
+  background: #fff;
+  border-bottom: 2px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+}
+
+/* ===========================
+   TOGGLE (RESPONSIVE)
+=========================== */
+#sidebar-toggle {
+  display: none;
+}
+
+.toggle-btn {
+  display: none;
+}
+
+@media (max-width: 992px) {
+  .sidebar {
+    left: -250px;
+  }
+  #sidebar-toggle:checked ~ .sidebar {
+    left: 0;
+  }
+  #sidebar-toggle:checked ~ .content {
+    margin-left: 250px;
+  }
+  .content {
+    margin-left: 0;
+  }
+  .toggle-btn {
+    display: inline-block;
+    cursor: pointer;
+    font-size: 1.7rem;
+    color: var(--green-main);
+    margin-right: 1rem;
+  }
+}
+
+/* ===========================
+   BOOK CARDS
+=========================== */
+.card.card-wrapper {
+  height: 100%;
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+}
+
+.card.card-wrapper:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-xl);
+}
+
+.card.card-wrapper .card-img-top {
+  width: 100%;
+  height: 220px;
+  min-height: 220px;
+  object-fit: cover;
+  border-bottom: 1px solid #e5e7eb;
+  display: block;
+  background-color: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.card.card-wrapper .card-body {
+  text-align: center;
+  padding: 0.75rem;
+}
+
+.card.card-wrapper h5 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.card.card-wrapper small {
+  color: var(--text-muted);
+}
+
+/* Badge for new books */
+.badge-status {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--yellow-accent);
+  color: #000;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+/* ===========================
+   DASHBOARD CARD STYLES
+=========================== */
+.dashboard-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: var(--shadow-lg);
+  transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-xl);
+}
+
+.dashboard-card h5 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.dashboard-card p {
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* Icon styles */
+.dashboard-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+
+/* ===========================
+   RESPONSIVE ADJUSTMENTS
+=========================== */
+@media (max-width: 768px) {
+  body {
+    padding-top: 80px;
+  }
+  .top-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    box-shadow: 0 2px 5px rgba(22, 21, 21, 0.1);
+  }
+}
+
