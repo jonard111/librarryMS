@@ -140,18 +140,35 @@ class AssistantController extends Controller
         return back()->with('success', 'Request approved successfully.');
     }
 
+    /**
+     * Mark an approved reservation as "picked up"
+     * 
+     * Process:
+     * 1. Verify reservation status is 'approved'
+     * 2. Calculate due date based on loan duration (days or hours)
+     * 3. Set pickup_date to current time
+     * 4. Update status to 'picked_up'
+     * 5. Reset fine_amount and fine_paid_at
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Reservation ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function approveReservation(Request $request, $id)
     {
         $reservation = BookReservation::findOrFail($id);
         
+        // Validate: Only approved reservations can be marked as picked up
         if ($reservation->status !== 'approved') {
             return back()->with('error', 'Only approved requests can be marked as picked up.');
         }
         
+        // Calculate due date based on user-selected loan duration
         $pickupAt = now();
-        $loanDuration = $reservation->loan_duration ?? 7;
-        $loanUnit = $reservation->loan_duration_unit ?? 'day';
+        $loanDuration = $reservation->loan_duration ?? 7; // Default: 7 days
+        $loanUnit = $reservation->loan_duration_unit ?? 'day'; // Default: days
 
+        // Calculate due date: add hours or days based on loan_unit
         $dueDate = $loanUnit === 'hour'
             ? $pickupAt->copy()->addHours($loanDuration)
             : $pickupAt->copy()->addDays($loanDuration);
@@ -167,16 +184,32 @@ class AssistantController extends Controller
         return back()->with('success', 'Book marked as picked up successfully.');
     }
 
+    /**
+     * Process book return
+     * 
+     * Process:
+     * 1. Check if there's an unsettled fine (block return if yes)
+     * 2. Calculate fine amount if overdue
+     * 3. Update status to 'returned'
+     * 4. Set return_date to current time
+     * 5. Record fine_amount
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Reservation ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function returnBook(Request $request, $id)
     {
         $reservation = BookReservation::findOrFail($id);
 
+        // STEP 1: Block return if there's an unsettled fine
         if ($reservation->has_unsettled_fine) {
             $fineAmount = number_format($reservation->current_fine, 2);
 
             return back()->with('error', "Payment required before returning this book. Outstanding fine: ₱{$fineAmount}.");
         }
 
+        // STEP 2: Calculate fine amount (use existing or calculate current)
         $fineAmount = $reservation->fine_amount ?: $reservation->current_fine;
 
         $reservation->update([
@@ -188,14 +221,27 @@ class AssistantController extends Controller
         return back()->with('success', 'Book returned successfully.');
     }
 
+    /**
+     * Settle (mark as paid) an overdue fine
+     * 
+     * Process:
+     * 1. Verify reservation has unsettled fine
+     * 2. Calculate current fine amount
+     * 3. Update fine_amount and set fine_paid_at timestamp
+     * 
+     * @param int $id Reservation ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function settleFine($id)
     {
         $reservation = BookReservation::with(['user', 'book'])->findOrFail($id);
 
+        // STEP 1: Verify there's an unsettled fine
         if (!$reservation->has_unsettled_fine) {
             return back()->with('error', 'This reservation does not have any outstanding fines.');
         }
 
+        // STEP 2: Calculate current fine amount (₱5.00 per day overdue)
         $fineAmount = $reservation->current_fine;
 
         if ($fineAmount <= 0) {

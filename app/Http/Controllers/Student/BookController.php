@@ -10,9 +10,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
+/**
+ * BookController
+ * 
+ * Handles all book-related operations for students including:
+ * - Browsing books (popular and all books)
+ * - Viewing book details
+ * - Reserving books with loan duration selection
+ * - Managing borrowed books and requests
+ * - Checking for existing reservations
+ */
 class BookController extends Controller
 {
-    // Show student dashboard books
+    /**
+     * Display popular books on student dashboard
+     * Shows 6 most recent books with reservation status
+     * 
+     * @return \Illuminate\View\View
+     */
     public function index()
     {
         // Get most popular/recent books (limit to 6 for display)
@@ -39,7 +54,12 @@ class BookController extends Controller
         ]);
     }
 
-    // Show all books
+    /**
+     * Display all books organized by category
+     * Includes reservation status check for each book
+     * 
+     * @return \Illuminate\View\View
+     */
     public function allBooks()
     {
         $categories = [
@@ -72,7 +92,13 @@ class BookController extends Controller
         ]);
     }
 
-    // Check if user has existing reservation for a book
+    /**
+     * Check if user already has an active reservation for a book
+     * Used by AJAX calls to prevent duplicate reservations
+     * 
+     * @param int $id Book ID
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function checkReservation($id)
     {
         $existingReservation = BookReservation::where('user_id', Auth::id())
@@ -100,7 +126,13 @@ class BookController extends Controller
         ]);
     }
 
-    // Show single book details
+    /**
+     * Display detailed information about a specific book
+     * Includes reservation status and reading list status
+     * 
+     * @param int $id Book ID
+     * @return \Illuminate\View\View
+     */
     public function show($id)
     {
         $book = Book::findOrFail($id);
@@ -112,9 +144,23 @@ class BookController extends Controller
         return view('student.book_details', compact('book', 'hasReservation'));
     }
 
-    // Reserve a book
+    /**
+     * Create a new book reservation request
+     * 
+     * Process:
+     * 1. Validate user doesn't have existing reservation
+     * 2. Check book availability
+     * 3. Validate loan duration (max 30 days or 72 hours for students)
+     * 4. Create reservation with status 'pending'
+     * 5. Redirect to borrowed books page
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Book ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function reserve(Request $request, $id)
     {
+        // Log reservation attempt for debugging
         \Log::info('Reservation attempt', [
             'user_id' => Auth::id(),
             'book_id' => $id,
@@ -123,7 +169,7 @@ class BookController extends Controller
         
         $book = Book::findOrFail($id);
         
-        // Check if user already has a pending/active reservation for this book
+        // STEP 1: Check if user already has a pending/active reservation for this book
         $existingReservation = BookReservation::where('user_id', Auth::id())
             ->where('book_id', $id)
             ->whereIn('status', ['pending', 'approved', 'picked_up'])
@@ -140,7 +186,7 @@ class BookController extends Controller
             return back()->with('error', $statusMessage)->withInput();
         }
         
-        // Check if book has available copies
+        // STEP 2: Check if book has available copies
         $reservedCopies = BookReservation::where('book_id', $id)
             ->whereIn('status', ['pending', 'approved', 'picked_up'])
             ->count();
@@ -149,11 +195,14 @@ class BookController extends Controller
             return back()->with('error', 'No copies available for reservation at the moment.')->withInput();
         }
         
+        // STEP 3: Validate loan duration input
         $validated = $request->validate([
             'loan_duration_value' => ['required', 'integer', 'min:1'],
             'loan_duration_unit' => ['required', Rule::in(['day', 'hour'])],
         ]);
 
+        // STEP 4: Enforce maximum loan duration limits for students
+        // Students: max 30 days or 72 hours
         $maxAllowed = $validated['loan_duration_unit'] === 'hour' ? 72 : 30;
 
         if ($validated['loan_duration_value'] > $maxAllowed) {
@@ -166,6 +215,7 @@ class BookController extends Controller
                 ->withInput();
         }
 
+        // STEP 5: Create the reservation record
         try {
             $reservation = BookReservation::create([
                 'user_id' => Auth::id(),
@@ -195,12 +245,19 @@ class BookController extends Controller
         }
     }
 
-    // Show borrowed books and requests
+    /**
+     * Display student's borrowed books and pending requests
+     * Shows two tables:
+     * 1. Recent Borrowed - books that were picked up or returned
+     * 2. My Book Requests - pending, approved, or currently borrowed books
+     * 
+     * @return \Illuminate\View\View
+     */
     public function borrowedBooks()
     {
         $userId = Auth::id();
         
-        // Get borrowed books (picked_up or returned status)
+        // Get borrowed books (picked_up or returned status) - historical records
         $borrowedBooks = BookReservation::where('user_id', $userId)
             ->whereIn('status', ['picked_up', 'returned'])
             ->with('book')
@@ -245,7 +302,13 @@ class BookController extends Controller
         ]);
     }
 
-    // Cancel a book request
+    /**
+     * Cancel a pending or approved book reservation
+     * Only allows cancellation if status is 'pending' or 'approved'
+     * 
+     * @param int $id Reservation ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function cancelRequest($id)
     {
         $reservation = BookReservation::where('user_id', Auth::id())

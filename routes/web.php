@@ -87,44 +87,49 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::get('/all-ebooks', fn () => view('Admin.all_ebooks'))->name('ebooks.all');
 });
 
-//Student Routes
+// ============================================
+// STUDENT ROUTES
+// ============================================
+// All routes require authentication and 'student' role
+// Prefix: /student
+// Route names: student.*
 
 Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
-    // Dashboard
+    // DASHBOARD: Main student dashboard with statistics and alerts
     Route::get('/dashboard', [\App\Http\Controllers\Student\DashboardController::class, 'dashboard'])->name('dashboard');
     
-    // Books
-    Route::get('/books', [BookController::class, 'index'])->name('books');
-    Route::get('/books/all', [BookController::class, 'allBooks'])->name('books.all');
-    Route::get('/books/{id}', [BookController::class, 'show'])->name('books.show');
-    Route::get('/books/{id}/check-reservation', [BookController::class, 'checkReservation'])->name('books.checkReservation');
-    Route::post('/books/{id}/reserve', [BookController::class, 'reserve'])->name('books.reserve');
+    // BOOKS: Browse and reserve books
+    Route::get('/books', [BookController::class, 'index'])->name('books'); // Popular books (6 most recent)
+    Route::get('/books/all', [BookController::class, 'allBooks'])->name('books.all'); // All books by category
+    Route::get('/books/{id}', [BookController::class, 'show'])->name('books.show'); // Book details page
+    Route::get('/books/{id}/check-reservation', [BookController::class, 'checkReservation'])->name('books.checkReservation'); // AJAX: Check if already reserved
+    Route::post('/books/{id}/reserve', [BookController::class, 'reserve'])->name('books.reserve'); // Create reservation request
     
-    // Ebooks
-    Route::get('/all-ebooks', [EbookController::class, 'allEbooks'])->name('ebooks.all');
-    Route::get('/ebooks/{id}', [EbookController::class, 'show'])->name('ebooks.show');
+    // EBOOKS: View digital books
+    Route::get('/all-ebooks', [EbookController::class, 'allEbooks'])->name('ebooks.all'); // All ebooks
+    Route::get('/ebooks/{id}', [EbookController::class, 'show'])->name('ebooks.show'); // Ebook details and reader
     
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
-    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    // PROFILE: Manage student profile
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show'); // View profile
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update'); // Update profile
     
-    // Reservations & Borrowed Books
-    Route::get('/borrowed-books', [BookController::class, 'borrowedBooks'])->name('borrowed');
+    // RESERVATIONS & BORROWED BOOKS: Track borrowing history
+    Route::get('/borrowed-books', [BookController::class, 'borrowedBooks'])->name('borrowed'); // View borrowed books and requests
     Route::get('/request-books', function () {
-        return redirect()->route('student.borrowed');
+        return redirect()->route('student.borrowed'); // Redirect to borrowed books
     })->name('requests');
-    Route::delete('/requests/{id}/cancel', [BookController::class, 'cancelRequest'])->name('requests.cancel');
+    Route::delete('/requests/{id}/cancel', [BookController::class, 'cancelRequest'])->name('requests.cancel'); // Cancel pending/approved request
     
-    // Reading List
-    Route::get('/reading-list', [\App\Http\Controllers\Student\ReadingListController::class, 'index'])->name('reading-list');
-    Route::post('/reading-list/{bookId}/add', [\App\Http\Controllers\Student\ReadingListController::class, 'add'])->name('reading-list.add');
-    Route::delete('/reading-list/{bookId}/remove', [\App\Http\Controllers\Student\ReadingListController::class, 'remove'])->name('reading-list.remove');
+    // READING LIST: Save books for later (wishlist feature)
+    Route::get('/reading-list', [\App\Http\Controllers\Student\ReadingListController::class, 'index'])->name('reading-list'); // View all saved books
+    Route::post('/reading-list/{bookId}/add', [\App\Http\Controllers\Student\ReadingListController::class, 'add'])->name('reading-list.add'); // Add book to reading list
+    Route::delete('/reading-list/{bookId}/remove', [\App\Http\Controllers\Student\ReadingListController::class, 'remove'])->name('reading-list.remove'); // Remove book from reading list
     
-    // Notifications & Announcements
+    // NOTIFICATIONS & ANNOUNCEMENTS: View system notifications
     Route::get('/announcements', function () {
-        return redirect()->route('student.notifications');
+        return redirect()->route('student.notifications'); // Redirect to notifications
     })->name('announcements');
-    Route::get('/notifications', StudentNotificationController::class)->name('notifications');
+    Route::get('/notifications', StudentNotificationController::class)->name('notifications'); // View all notifications
 });
 
 // Faculty Routes
@@ -155,46 +160,51 @@ Route::middleware(['auth', 'role:faculty'])->prefix('faculty')->name('faculty.')
     Route::get('/notification', [FacultyController::class, 'notification'])->name('notification');
 });
 
-//Assistant Routes
+// ============================================
+// ASSISTANT ROUTES
+// ============================================
+// Library assistants can manage books, process reservations, and view students
+// Prefix: /assistant
+// Route names: assistant.*
 
 Route::middleware(['auth', 'role:assistant'])->prefix('assistant')->name('assistant.')->group(function () {
-    // Dashboard
+    // DASHBOARD: Assistant dashboard with quick stats
     Route::get('/dashboard', [AssistantController::class, 'dashboard'])->name('dashboard');
     
-    // Profile
+    // PROFILE: Manage assistant profile
     Route::get('/profile', [AssistantProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [AssistantProfileController::class, 'update'])->name('profile.update');
     
-    // Books Management
-    Route::get('/all-books', [AssistantController::class, 'allBooks'])->name('allBooks');
-    Route::post('/all-books', [InventoryController::class, 'storeBook'])->name('books.store');
-    Route::get('/all-books/{book}/edit', [InventoryController::class, 'editBook'])->name('books.edit');
-    Route::put('/all-books/{book}', [InventoryController::class, 'updateBook'])->name('books.update');
-    Route::delete('/all-books/{book}', [InventoryController::class, 'destroyBook'])->name('books.destroy');
+    // BOOKS MANAGEMENT: Full CRUD operations for books
+    Route::get('/all-books', [AssistantController::class, 'allBooks'])->name('allBooks'); // View all books
+    Route::post('/all-books', [InventoryController::class, 'storeBook'])->name('books.store'); // Add new book
+    Route::get('/all-books/{book}/edit', [InventoryController::class, 'editBook'])->name('books.edit'); // Edit book form
+    Route::put('/all-books/{book}', [InventoryController::class, 'updateBook'])->name('books.update'); // Update book
+    Route::delete('/all-books/{book}', [InventoryController::class, 'destroyBook'])->name('books.destroy'); // Delete book
     
-    // Ebooks Management
-    Route::get('/all-ebooks', [AssistantController::class, 'allEbooks'])->name('allEbooks');
-    Route::post('/all-ebooks', [InventoryController::class, 'storeEbook'])->name('ebooks.store');
-    Route::get('/all-ebooks/{ebook}/edit', [InventoryController::class, 'editEbook'])->name('ebooks.edit');
-    Route::put('/all-ebooks/{ebook}', [InventoryController::class, 'updateEbook'])->name('ebooks.update');
-    Route::delete('/all-ebooks/{ebook}', [InventoryController::class, 'destroyEbook'])->name('ebooks.destroy');
+    // EBOOKS MANAGEMENT: Full CRUD operations for ebooks
+    Route::get('/all-ebooks', [AssistantController::class, 'allEbooks'])->name('allEbooks'); // View all ebooks
+    Route::post('/all-ebooks', [InventoryController::class, 'storeEbook'])->name('ebooks.store'); // Add new ebook
+    Route::get('/all-ebooks/{ebook}/edit', [InventoryController::class, 'editEbook'])->name('ebooks.edit'); // Edit ebook form
+    Route::put('/all-ebooks/{ebook}', [InventoryController::class, 'updateEbook'])->name('ebooks.update'); // Update ebook
+    Route::delete('/all-ebooks/{ebook}', [InventoryController::class, 'destroyEbook'])->name('ebooks.destroy'); // Delete ebook
     
-    // Reservations Management
+    // RESERVATIONS MANAGEMENT: Process book reservations and returns
     Route::get('/borrow-return', function () {
-        return redirect()->route('assistant.reservation');
+        return redirect()->route('assistant.reservation'); // Redirect to reservation page
     })->name('borrowReturn');
-    Route::get('/reservation', [AssistantController::class, 'reservation'])->name('reservation');
-    Route::put('/reservation/{id}/approve-request', [AssistantController::class, 'approveRequest'])->name('reservation.approveRequest');
-    Route::put('/reservation/{id}/approve', [AssistantController::class, 'approveReservation'])->name('reservation.approve');
-    Route::put('/reservation/{id}/return', [AssistantController::class, 'returnBook'])->name('reservation.return');
-    Route::put('/reservation/{id}/settle-fine', [AssistantController::class, 'settleFine'])->name('reservation.settleFine');
-    Route::delete('/reservation/{id}', [AssistantController::class, 'destroyReservation'])->name('reservation.destroy');
+    Route::get('/reservation', [AssistantController::class, 'reservation'])->name('reservation'); // View all reservations
+    Route::put('/reservation/{id}/approve-request', [AssistantController::class, 'approveRequest'])->name('reservation.approveRequest'); // Approve pending request (status: pending → approved)
+    Route::put('/reservation/{id}/approve', [AssistantController::class, 'approveReservation'])->name('reservation.approve'); // Mark as picked up (status: approved → picked_up, calculate due date)
+    Route::put('/reservation/{id}/return', [AssistantController::class, 'returnBook'])->name('reservation.return'); // Return book (status: picked_up → returned, calculate fine if overdue)
+    Route::put('/reservation/{id}/settle-fine', [AssistantController::class, 'settleFine'])->name('reservation.settleFine'); // Settle overdue fine (mark as paid)
+    Route::delete('/reservation/{id}', [AssistantController::class, 'destroyReservation'])->name('reservation.destroy'); // Delete/cancel reservation
     
-    // Additional Features
-    Route::get('/manage-books', [AssistantController::class, 'manageBooks'])->name('manageBooks');
-    Route::get('/student', [AssistantController::class, 'student'])->name('student');
-    Route::get('/notification', [AssistantController::class, 'notification'])->name('notification');
-    Route::get('/announcement', [AssistantController::class, 'announcement'])->name('announcement');
+    // ADDITIONAL FEATURES: Other assistant functions
+    Route::get('/manage-books', [AssistantController::class, 'manageBooks'])->name('manageBooks'); // Book management overview
+    Route::get('/student', [AssistantController::class, 'student'])->name('student'); // View student records with fine tracking
+    Route::get('/notification', [AssistantController::class, 'notification'])->name('notification'); // View notifications
+    Route::get('/announcement', [AssistantController::class, 'announcement'])->name('announcement'); // View announcements
 });
 
 //Head Librarian Routes

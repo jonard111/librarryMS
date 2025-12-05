@@ -8,8 +8,22 @@ use App\Models\Ebook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * InventoryController
+ * 
+ * Handles book and ebook inventory management for Head Librarian and Assistants:
+ * - View all books/ebooks organized by category
+ * - Create new books/ebooks (with file uploads)
+ * - Update existing books/ebooks
+ * - Delete books/ebooks
+ * - Handle cover image and PDF file storage
+ */
 class InventoryController extends Controller
 {
+    /**
+     * Available book categories
+     * Used for validation and dropdown options
+     */
     private array $categoryOptions = [
         'education' => 'Education & Learning',
         'science' => 'Science & Technology',
@@ -18,6 +32,12 @@ class InventoryController extends Controller
         'selfhelp' => 'Self-Help / Motivation',
     ];
 
+    /**
+     * Display all books organized by category
+     * Used by Head Librarian and Assistants
+     * 
+     * @return \Illuminate\View\View
+     */
     public function books()
     {
         $booksByCategory = Book::latest()->get()->groupBy('category');
@@ -28,8 +48,20 @@ class InventoryController extends Controller
         ]);
     }
 
+    /**
+     * Create a new physical book in the inventory
+     * 
+     * Process:
+     * 1. Validate book data (title, author, ISBN, publisher, category, copies)
+     * 2. Handle optional cover image upload (stored in public/covers)
+     * 3. Create book record in database
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function storeBook(Request $request)
     {
+        // STEP 1: Validate input data
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'author' => ['required', 'string', 'max:255'],
@@ -37,15 +69,19 @@ class InventoryController extends Controller
             'publisher' => ['nullable', 'string', 'max:255'],
             'category' => ['required', 'string', 'in:' . implode(',', array_keys($this->categoryOptions))],
             'copies' => ['required', 'integer', 'min:1'],
-            'cover' => ['nullable', 'image', 'max:2048'],
+            'cover' => ['nullable', 'image', 'max:2048'], // Max 2MB
         ]);
 
+        // Prepare book data (exclude cover file from array)
         $bookData = collect($validated)->except('cover')->toArray();
 
+        // STEP 2: Handle cover image upload if provided
         if ($request->hasFile('cover')) {
+            // Store in public/covers directory, returns path like "covers/filename.jpg"
             $bookData['cover_path'] = $request->file('cover')->store('covers', 'public');
         }
 
+        // STEP 3: Create book record
         Book::create($bookData);
 
         return back()->with('book_success', 'Book added successfully!');

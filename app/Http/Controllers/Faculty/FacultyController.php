@@ -117,6 +117,23 @@ class FacultyController extends Controller
         return view('faculty.ebook_details', compact('ebook'));
     }
 
+    /**
+     * Create a new book reservation request (Faculty)
+     * 
+     * Process:
+     * 1. Validate user doesn't have existing reservation
+     * 2. Check book availability
+     * 3. Validate loan duration (max 60 days or 168 hours for faculty)
+     * 4. Create reservation with status 'pending'
+     * 
+     * Note: Faculty have higher loan limits than students
+     * - Students: max 30 days or 72 hours
+     * - Faculty: max 60 days or 168 hours (7 days)
+     * 
+     * @param \Illuminate\Http\Request $request
+     * @param int $id Book ID
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function reserveBook(Request $request, $id)
     {
         $book = Book::findOrFail($id);

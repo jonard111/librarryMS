@@ -239,7 +239,21 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-        // Validate form before submission
+    /**
+     * ============================================
+     * RESERVATION FORM VALIDATION & HANDLING
+     * ============================================
+     */
+    
+    /**
+     * Validate reservation form before submission
+     * - Checks loan duration limits (30 days or 72 hours for students)
+     * - Shows confirmation dialog
+     * - Prevents submission if validation fails
+     * 
+     * @param {Event} event Form submit event
+     * @returns {boolean} false if validation fails, true if confirmed
+     */
     function validateReservationForm(event) {
         const form = document.getElementById('reserveBookForm');
         const action = form.getAttribute('action') || form.action;
@@ -253,7 +267,7 @@
             formMethod: form.method
         });
         
-        // Check if form action is set
+        // STEP 1: Validate form action is set (prevents submission to wrong URL)
         if (!action || action === '' || action === window.location.href) {
             event.preventDefault();
             alert('Error: Form action not set. Please close the modal and try again.');
@@ -261,13 +275,15 @@
             return false;
         }
         
-        // Validate duration
+        // STEP 2: Validate loan duration value (must be positive integer)
         if (!durationValue || durationValue < 1) {
             event.preventDefault();
             alert('Please enter a valid loan duration.');
             return false;
         }
         
+        // STEP 3: Enforce maximum loan duration limits for students
+        // Students: max 30 days or 72 hours
         const maxAllowed = durationUnit === 'hour' ? 72 : 30;
         if (parseInt(durationValue) > maxAllowed) {
             event.preventDefault();
@@ -277,7 +293,7 @@
             return false;
         }
         
-        // Show confirmation dialog
+        // STEP 4: Show confirmation dialog before submitting
         const bookTitle = document.getElementById('reserveBookTitle').textContent;
         const confirmMessage = `Are you sure you want to reserve "${bookTitle}" for ${durationValue} ${durationUnit === 'hour' ? 'hour(s)' : 'day(s)'}?`;
         
@@ -290,12 +306,20 @@
         return true;
     }
 
+    /**
+     * ============================================
+     * RESERVE BOOK MODAL HANDLING
+     * ============================================
+     * Handles opening the reservation modal and populating it with book data
+     */
     document.addEventListener('DOMContentLoaded', function() {
         const reserveButtons = document.querySelectorAll('.reserve-book-btn');
         const reserveForm = document.getElementById('reserveBookForm');
         
+        // Attach click handler to all "Reserve" buttons
         reserveButtons.forEach(button => {
             button.addEventListener('click', function() {
+                // STEP 1: Extract book data from button's data attributes
                 const bookId = this.getAttribute('data-book-id');
                 const title = this.getAttribute('data-book-title');
                 const author = this.getAttribute('data-book-author');
@@ -305,7 +329,7 @@
                 const publisher = this.getAttribute('data-book-publisher');
                 const category = this.getAttribute('data-book-category');
                 
-                // Check if user already has a reservation for this book
+                // STEP 2: Check if user already has a reservation for this book (AJAX call)
                 fetch(`/student/books/${bookId}/check-reservation`, {
                     method: 'GET',
                     headers: {

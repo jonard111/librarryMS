@@ -8,29 +8,50 @@ use App\Models\ReadingList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * ReadingListController
+ * 
+ * Manages student reading list (wishlist) functionality:
+ * - View all saved books
+ * - Add books to reading list
+ * - Remove books from reading list
+ * - Prevents duplicate entries
+ */
 class ReadingListController extends Controller
 {
     /**
-     * Display the user's reading list
+     * Display the user's complete reading list
+     * Shows paginated list of all books saved by the student
+     * 
+     * @return \Illuminate\View\View
      */
     public function index()
     {
+        // Get all reading list items for current user, paginated (12 per page)
         $readingList = ReadingList::where('user_id', Auth::id())
-            ->with('book')
-            ->latest('created_at')
+            ->with('book') // Eager load book relationship
+            ->latest('created_at') // Most recently added first
             ->paginate(12);
         
         return view('student.reading_list', compact('readingList'));
     }
 
     /**
-     * Add a book to the reading list
+     * Add a book to the student's reading list
+     * 
+     * Process:
+     * 1. Verify book exists
+     * 2. Check if already in reading list (prevent duplicates)
+     * 3. Create reading list entry
+     * 
+     * @param int $bookId Book ID to add
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function add($bookId)
     {
         $book = Book::findOrFail($bookId);
         
-        // Check if already in reading list
+        // STEP 1: Check if already in reading list (prevent duplicates)
         $existing = ReadingList::where('user_id', Auth::id())
             ->where('book_id', $bookId)
             ->first();
@@ -48,7 +69,14 @@ class ReadingListController extends Controller
     }
 
     /**
-     * Remove a book from the reading list
+     * Remove a book from the student's reading list
+     * 
+     * Process:
+     * 1. Find reading list entry
+     * 2. Delete entry if found
+     * 
+     * @param int $bookId Book ID to remove
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function remove($bookId)
     {

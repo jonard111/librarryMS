@@ -56,6 +56,10 @@ class BookReservation extends Model
         'fine_paid_at' => 'datetime',
     ];
 
+    /**
+     * Fine rate per day for overdue books
+     * Rate: ₱5.00 per day
+     */
     private const FINE_RATE_PER_DAY = 5.00;
 
     /**
@@ -128,16 +132,24 @@ class BookReservation extends Model
     }
 
     /**
-     * Calculate the current fine amount based on days overdue.
+     * Calculate the current fine amount based on days overdue
+     * 
+     * Formula: (Days Overdue) × ₱5.00
+     * Only calculates if book is overdue and not yet returned
+     * 
+     * @return float Fine amount in pesos
      */
     public function calculateFine(): float
     {
+        // No fine if not overdue or already returned
         if (!$this->isOverdue()) {
             return 0.0;
         }
 
+        // Calculate days overdue
         $overdueDays = Carbon::parse($this->due_date)->diffInDays(now());
 
+        // Return fine: days × rate (rounded to 2 decimal places)
         return round($overdueDays * self::FINE_RATE_PER_DAY, 2);
     }
 

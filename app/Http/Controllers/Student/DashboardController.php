@@ -11,12 +11,37 @@ use App\Models\Book;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
+/**
+ * DashboardController
+ * 
+ * Handles student dashboard data aggregation including:
+ * - Statistics (borrowed books, pending requests, announcements, ebooks)
+ * - Alert notifications (overdue, due soon, ready for pickup)
+ * - Reading statistics
+ * - Recent announcements
+ * - Recommended books
+ * - Reading list preview
+ */
 class DashboardController extends Controller
 {
+    /**
+     * Display student dashboard with comprehensive data
+     * 
+     * Collects and organizes:
+     * - Statistics cards
+     * - Alert notifications (overdue, due soon, ready for pickup)
+     * - Quick stats (total read, reading list count, overdue count)
+     * - Recent announcements
+     * - Recommended books
+     * - Reading list preview
+     * 
+     * @return \Illuminate\View\View
+     */
     public function dashboard()
     {
         $userId = Auth::id();
         
+        // STATISTICS CARDS: Basic counts for dashboard cards
         // Borrowed Books (currently picked up)
         $borrowedBooksCount = BookReservation::where('user_id', $userId)
             ->where('status', 'picked_up')
@@ -39,13 +64,14 @@ class DashboardController extends Controller
         // Total E-Books
         $totalEbooks = Ebook::count();
         
-        // Reading list (books saved by user)
+        // READING LIST: Get user's saved books (latest 6 for dashboard preview)
         $readingList = ReadingList::where('user_id', $userId)
             ->with('book')
             ->latest('created_at')
             ->take(6)
             ->get();
         
+        // ALERT: Books due soon (within next 3 days) - shows warning alert
         // Books due soon (within 3 days)
         $booksDueSoon = BookReservation::where('user_id', $userId)
             ->where('status', 'picked_up')
@@ -57,7 +83,8 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
         
-        // Overdue books
+        // ALERT: Overdue books - shows danger alert with fine information
+        // Overdue books (past due date, not returned)
         $overdueBooks = BookReservation::where('user_id', $userId)
             ->where('status', 'picked_up')
             ->whereNotNull('due_date')
@@ -67,6 +94,7 @@ class DashboardController extends Controller
             ->orderBy('due_date', 'asc')
             ->get();
         
+        // RECENT ANNOUNCEMENTS: Latest 3 announcements for preview section
         // Recent announcements (latest 3)
         $recentAnnouncements = Announcement::where('status', 'published')
             ->where(function($query) {
@@ -78,7 +106,8 @@ class DashboardController extends Controller
             ->take(3)
             ->get();
         
-        // Recommended books (based on reading list categories or popular books)
+        // RECOMMENDED BOOKS: Personalized recommendations based on reading list categories
+        // Step 1: Get categories from user's reading list
         $readingListCategories = ReadingList::where('user_id', $userId)
             ->with('book')
             ->get()
@@ -87,6 +116,7 @@ class DashboardController extends Controller
             ->unique()
             ->toArray();
         
+        // Step 2: Find books in those categories that user hasn't reserved
         $recommendedBooks = Book::whereIn('category', $readingListCategories)
             ->orWhere(function($query) {
                 $query->whereNotIn('id', function($subquery) {
@@ -100,11 +130,12 @@ class DashboardController extends Controller
             ->take(6)
             ->get();
         
-        // If no recommendations based on reading list, show popular books
+        // Step 3: Fallback to popular books if no category-based recommendations
         if ($recommendedBooks->isEmpty()) {
             $recommendedBooks = Book::latest()->take(6)->get();
         }
         
+        // QUICK STATS: Reading statistics for dashboard cards
         // Reading statistics
         $totalBooksRead = BookReservation::where('user_id', $userId)
             ->where('status', 'returned')
@@ -116,7 +147,8 @@ class DashboardController extends Controller
             ->whereYear('return_date', now()->year)
             ->count();
         
-        // Approved books ready for pickup
+        // ALERT: Books ready for pickup - shows success alert
+        // Approved books ready for pickup (status: approved, waiting for physical pickup)
         $readyForPickup = BookReservation::where('user_id', $userId)
             ->where('status', 'approved')
             ->with('book')
