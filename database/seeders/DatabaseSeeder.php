@@ -12,13 +12,16 @@ class DatabaseSeeder extends Seeder
      *
      * @return void
      */
+    /**
+     * Seed the application's database.
+     *
+     * @return void
+     */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
-
-        // \App\Models\User::factory()->create([
-        //     'name' => 'Test User',
-        //     'email' => 'test@example.com',
-        // ]);
+        // Seed sample overdue reservations for testing fine calculation
+        $this->call([
+            DemoOverdueReservationSeeder::class,
+        ]);
     }
 }

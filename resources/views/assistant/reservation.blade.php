@@ -145,9 +145,21 @@
 </div>
 
 <div class="card card-body mb-4">
-  <h5 class="card-title p-3">Book Reservations</h5>
+  <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+    <h5 class="card-title mb-0">Book Reservations</h5>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm table-column-filter" data-filter-table="reservationsTable" data-filter-column="5" style="max-width: 200px;">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Picked Up">Picked Up</option>
+        <option value="Returned">Returned</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+    </div>
+  </div>
   <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table table-hover align-middle filterable-table" data-filter-id="reservationsTable">
       <thead class="table-light">
         <tr>
           <th>Student Name</th>
@@ -228,9 +240,19 @@
 </div>
 
 <div class="card card-body">
-  <h5 class="card-title p-3">Current Active Borrowers</h5>
+  <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+    <h5 class="card-title mb-0">Current Active Borrowers</h5>
+    <div class="d-flex gap-2">
+      <select class="form-select form-select-sm table-column-filter" data-filter-table="activeBorrowersTable" data-filter-column="5" style="max-width: 200px;">
+        <option value="">All Status</option>
+        <option value="Active">Active</option>
+        <option value="Payment Required">Payment Required</option>
+        <option value="Overdue">Overdue</option>
+      </select>
+    </div>
+  </div>
   <div class="table-responsive">
-    <table class="table table-hover align-middle">
+    <table class="table table-hover align-middle filterable-table" data-filter-id="activeBorrowersTable">
       <thead class="table-light">
         <tr>
           <th>Student Name</th>
@@ -258,7 +280,7 @@
             @if($requiresPayment)
                 <span class="badge bg-danger p-2">Payment Required</span>
             @elseif($isOverdue)
-                <span class="badge bg-warning text-dark p-2">Overdue – Settled</span>
+                <span class="badge bg-warning text-dark p-2">Overdue</span>
             @elseif($borrower->due_date && $borrower->due_date->diffInDays(now()) <= 3)
                 <span class="badge bg-warning text-dark p-2">Due Soon</span>
             @else

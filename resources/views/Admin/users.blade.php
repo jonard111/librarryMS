@@ -79,9 +79,20 @@
   <!-- Approved Users Table -->
   <div class="card shadow-sm mb-4">
     <div class="card-body">
-      <h5 class="fw-bold">Approved Users</h5>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Approved Users</h5>
+        <div class="d-flex gap-2">
+          <select class="form-select form-select-sm table-column-filter" data-filter-table="approvedUsersTable" data-filter-column="3" style="max-width: 150px;">
+            <option value="">All Roles</option>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="assistant">Assistant</option>
+            <option value="headlibrarian">Head Librarian</option>
+          </select>
+        </div>
+      </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle filterable-table" data-filter-id="approvedUsersTable">
           <thead class="table-light">
             <tr>
               <th>User ID</th>
@@ -126,13 +137,25 @@
   <!-- Pending Users Table -->
   <div class="card shadow-sm mb-5">
     <div class="card-header bg-transparent border-0 pt-4">
-      <h5 class="fw-bold">Account Requests</h5>
-      <p class="text-muted small mb-0">Pending user registrations awaiting approval.</p>
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h5 class="fw-bold mb-0">Account Requests</h5>
+          <p class="text-muted small mb-0">Pending user registrations awaiting approval.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <select class="form-select form-select-sm table-column-filter" data-filter-table="pendingUsersTable" data-filter-column="0" style="max-width: 150px;">
+            <option value="">All Roles</option>
+            <option value="student">Student</option>
+            <option value="faculty">Faculty</option>
+            <option value="assistant">Assistant</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <div class="card-body">
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle filterable-table" data-filter-id="pendingUsersTable">
           <thead class="table-light">
             <tr>
               <th>Role</th>

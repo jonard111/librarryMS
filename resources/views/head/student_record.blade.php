@@ -148,9 +148,18 @@
 
     <!-- Borrow Record Table -->
     <div class="card card-body">
-      <h5 class="card-title mb-3">Borrow Record</h5>
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title mb-0">Borrow Record</h5>
+        <div class="d-flex gap-2">
+          <select class="form-select form-select-sm table-column-filter" data-filter-table="headStudentTable" data-filter-column="5" style="max-width: 200px;">
+            <option value="">All Status</option>
+            <option value="Unpaid">Unpaid</option>
+            <option value="Paid">Paid</option>
+          </select>
+        </div>
+      </div>
       <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle filterable-table" data-filter-id="headStudentTable">
           <thead class="table-light">
             <tr>
               <th>ID</th>

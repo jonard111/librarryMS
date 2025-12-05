@@ -1,5 +1,6 @@
 import './bootstrap';
-import '../css/app.css'; 
+import '../css/app.css';
+import './table-filter'; // Import table filter functionality
 import { createApp } from "vue";
 
 import SystemUsageChart from "./Components/SystemUsageChart.vue";

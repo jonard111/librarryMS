@@ -101,9 +101,12 @@ class AssistantController extends Controller
             ->orderBy('reservation_date', 'desc')
             ->get();
 
+        // Get active borrowers - exclude books that are settled/returned
+        // Settled books (fine_paid_at is not null) are already returned, so exclude them
         $activeBorrowers = BookReservation::with(['user', 'book'])
             ->where('status', 'picked_up')
             ->whereNull('return_date')
+            ->whereNull('fine_paid_at') // Exclude settled books (they're already returned)
             ->orderBy('pickup_date', 'desc')
             ->get();
 
@@ -241,21 +244,60 @@ class AssistantController extends Controller
             return back()->with('error', 'This reservation does not have any outstanding fines.');
         }
 
-        // STEP 2: Calculate current fine amount (₱5.00 per day overdue)
-        $fineAmount = $reservation->current_fine;
+        // STEP 2: Calculate current fine amount
+        // - Hourly loans: ₱1.00 per hour overdue
+        // - Daily loans: ₱10.00 per day overdue
+        $fineAmount = $reservation->calculateFine();
 
-        if ($fineAmount <= 0) {
-            return back()->with('error', 'Unable to calculate an outstanding fine for this reservation.');
+        // If calculated fine is 0 or less, calculate manually as fallback
+        if ($fineAmount <= 0 && $reservation->due_date) {
+            $loanUnit = $reservation->loan_duration_unit ?? 'day';
+            $dueDate = \Carbon\Carbon::parse($reservation->due_date);
+            $now = \Carbon\Carbon::now();
+            
+            if ($loanUnit === 'hour') {
+                // Calculate hours overdue for hourly loans
+                if ($dueDate->isPast()) {
+                    $overdueHours = max(1, $now->diffInHours($dueDate));
+                    $fineAmount = round($overdueHours * 1.00, 2);
+                }
+            } else {
+                // Calculate days overdue for daily loans
+                $dueDateStart = $dueDate->copy()->startOfDay();
+                $nowStart = $now->copy()->startOfDay();
+                
+                if ($dueDateStart->isPast()) {
+                    $overdueDays = max(1, $nowStart->diffInDays($dueDateStart));
+                    $fineAmount = round($overdueDays * 10.00, 2);
+                }
+            }
         }
 
+        // Final check - ensure we have a valid fine amount
+        if ($fineAmount <= 0) {
+            \Log::error('Fine calculation failed', [
+                'reservation_id' => $reservation->id,
+                'due_date' => $reservation->due_date,
+                'status' => $reservation->status,
+                'return_date' => $reservation->return_date,
+                'is_overdue' => $reservation->isOverdue(),
+                'calculated_fine' => $fineAmount,
+            ]);
+            return back()->with('error', 'Unable to calculate an outstanding fine for this reservation. Please check the due date and status.');
+        }
+
+        // STEP 4: Mark fine as paid AND automatically return the book
         $reservation->update([
             'fine_amount' => $fineAmount,
             'fine_paid_at' => now(),
+            'status' => 'returned',
+            'return_date' => now(),
         ]);
 
         $studentName = $reservation->user?->full_name ?? 'The borrower';
+        $bookTitle = $reservation->book?->title ?? 'the book';
 
-        return back()->with('success', "{$studentName}'s overdue fine of ₱" . number_format($fineAmount, 2) . ' has been recorded as paid.');
+        return back()->with('success', "{$studentName}'s overdue fine of ₱" . number_format($fineAmount, 2) . " has been paid and '{$bookTitle}' has been marked as returned.");
     }
 
     public function destroyReservation($id)
@@ -292,40 +334,78 @@ class AssistantController extends Controller
             return \Carbon\Carbon::parse($student->registration_date)->isCurrentMonth();
         })->count();
         
-        // Get student borrowing records with relationships
+        // ADDITIONAL STATISTICS: Books and Fines
+        // Books currently borrowed by all students
+        $booksCurrentlyBorrowed = BookReservation::whereHas('user', function ($query) {
+                $query->where('role', 'student');
+            })
+            ->where('status', 'picked_up')
+            ->whereNull('return_date')
+            ->count();
+        
+        // Overdue books count
+        $overdueBooksCount = BookReservation::whereHas('user', function ($query) {
+                $query->where('role', 'student');
+            })
+            ->where('status', 'picked_up')
+            ->whereNull('return_date')
+            ->where('due_date', '<', now())
+            ->count();
+        
+        // Total fines collected this month (fines that were paid this month)
+        $totalFinesCollected = BookReservation::whereHas('user', function ($query) {
+                $query->where('role', 'student');
+            })
+            ->whereNotNull('fine_paid_at')
+            ->whereMonth('fine_paid_at', now()->month)
+            ->whereYear('fine_paid_at', now()->year)
+            ->sum('fine_amount');
+        
+        // Pending fines (unpaid fines for overdue books)
+        $pendingFines = BookReservation::whereHas('user', function ($query) {
+                $query->where('role', 'student');
+            })
+            ->where('status', 'picked_up')
+            ->whereNull('return_date')
+            ->where('due_date', '<', now())
+            ->whereNull('fine_paid_at')
+            ->get()
+            ->sum(function ($reservation) {
+                return $reservation->current_fine;
+            });
+        
+        // Get individual book reservations (not grouped by user)
+        // Each book borrowed by a student will be a separate row
+        // Only get books that are actually picked up (not just approved)
+        // Exclude settled books (fine_paid_at is not null) - they're already returned
         $borrowingRecords = BookReservation::with(['user', 'book'])
             ->whereHas('user', function ($query) {
                 $query->where('role', 'student');
             })
-            ->whereIn('status', ['picked_up', 'approved'])
+            ->where('status', 'picked_up') // Only books that are actually borrowed
+            ->whereNull('return_date') // Only books that haven't been returned yet
+            ->whereNull('fine_paid_at') // Exclude settled books (they're already returned)
+            ->orderBy('due_date', 'asc') // Order by due date (overdue first)
             ->get()
-            ->groupBy('user_id')
-            ->map(function ($reservations) {
-                $user = $reservations->first()->user;
-                $activeLoans = $reservations->where('status', 'picked_up');
-                $overdueReservations = $activeLoans->filter->is_overdue;
-                $unsettledReservations = $overdueReservations->filter->has_unsettled_fine;
-                $totalFine = $unsettledReservations->sum(function ($reservation) {
-                    return $reservation->current_fine;
-                });
-
-                $latestReservation = $reservations->sortByDesc(function ($reservation) {
-                    return $reservation->reservation_date ?? $reservation->created_at;
-                })->first();
-
+            ->map(function ($reservation) {
+                // Calculate fine information for this specific reservation
+                $isOverdue = $reservation->isOverdue();
+                $hasUnsettledFine = $reservation->hasUnsettledFine();
+                $fineAmount = $hasUnsettledFine ? $reservation->current_fine : 0;
+                
                 return [
-                    'user' => $user,
-                    'borrowed_count' => $activeLoans->count(),
-                    'overdue_count' => $overdueReservations->count(),
-                    'requires_payment' => $unsettledReservations->isNotEmpty(),
-                    'unsettled_count' => $unsettledReservations->count(),
-                    'fine_due' => round($totalFine, 2),
-                    'reservations' => $reservations,
-                    'unsettled_reservations' => $unsettledReservations->values(),
-                    'latest_loan_label' => $latestReservation ? $latestReservation->loan_duration_label : null,
+                    'reservation' => $reservation,
+                    'user' => $reservation->user,
+                    'book' => $reservation->book,
+                    'is_overdue' => $isOverdue,
+                    'has_unsettled_fine' => $hasUnsettledFine,
+                    'fine_due' => round($fineAmount, 2),
+                    'requires_payment' => $hasUnsettledFine,
+                    'due_date' => $reservation->due_date,
+                    'pickup_date' => $reservation->pickup_date,
+                    'loan_duration_label' => $reservation->loan_duration_label,
                 ];
-            })
-            ->values();
+            });
         
         // Calculate percentage changes (simplified - comparing to last month)
         $lastMonthTotal = \App\Models\User::where('role', 'student')
@@ -353,6 +433,38 @@ class AssistantController extends Controller
             ->count();
         $newChange = $lastMonthNew > 0 ? round((($newStudents - $lastMonthNew) / $lastMonthNew) * 100) : 0;
         
+        // Get returned books with fine information
+        // Shows books that have been returned, including those that had fines
+        $returnedBooks = BookReservation::with(['user', 'book'])
+            ->whereHas('user', function ($query) {
+                $query->where('role', 'student');
+            })
+            ->where('status', 'returned') // Only returned books
+            ->whereNotNull('return_date') // Must have return date
+            ->orderBy('return_date', 'desc') // Most recently returned first
+            ->get()
+            ->map(function ($reservation) {
+                // Check if this returned book had fines
+                $hadFine = $reservation->fine_amount > 0 || $reservation->fine_paid_at !== null;
+                $finePaid = $reservation->fine_paid_at !== null;
+                
+                return [
+                    'reservation' => $reservation,
+                    'user' => $reservation->user,
+                    'book' => $reservation->book,
+                    'had_fine' => $hadFine,
+                    'fine_paid' => $finePaid,
+                    'fine_amount' => round($reservation->fine_amount ?? 0, 2),
+                    'fine_paid_at' => $reservation->fine_paid_at,
+                    'return_date' => $reservation->return_date,
+                    'due_date' => $reservation->due_date,
+                    'pickup_date' => $reservation->pickup_date,
+                    'loan_duration_label' => $reservation->loan_duration_label,
+                    'was_overdue' => $reservation->due_date && $reservation->return_date && 
+                                     \Carbon\Carbon::parse($reservation->return_date)->gt(\Carbon\Carbon::parse($reservation->due_date)),
+                ];
+            });
+        
         return view('assistant.student', [
             'totalStudents' => $totalStudents,
             'activeStudents' => $activeStudents,
@@ -363,6 +475,12 @@ class AssistantController extends Controller
             'inactiveChange' => $inactiveChange,
             'newChange' => $newChange,
             'borrowingRecords' => $borrowingRecords,
+            'returnedBooks' => $returnedBooks, // New: returned books with fine info
+            // Additional statistics
+            'booksCurrentlyBorrowed' => $booksCurrentlyBorrowed,
+            'overdueBooksCount' => $overdueBooksCount,
+            'totalFinesCollected' => round($totalFinesCollected, 2),
+            'pendingFines' => round($pendingFines, 2),
         ]);
     }
 

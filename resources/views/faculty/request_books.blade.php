@@ -111,11 +111,18 @@
 
  <div class="card border-0 shadow-sm mb-4">
   <div class="card-body">
-    <h5 class="fw-bold mb-3">
-      My Book Request
-    </h5>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="fw-bold mb-0">My Book Request</h5>
+      <select class="form-select form-select-sm table-column-filter" data-filter-table="facultyRequestsTable" data-filter-column="4" style="max-width: 180px;">
+        <option value="">All Status</option>
+        <option value="Pending">Pending</option>
+        <option value="Approved">Approved</option>
+        <option value="Picked Up">Picked Up</option>
+        <option value="Rejected">Rejected</option>
+      </select>
+    </div>
     <div class="table-responsive">
-      <table class="table table-hover align-middle">
+      <table class="table table-hover align-middle filterable-table" data-filter-id="facultyRequestsTable">
         <thead class="table-light">
           <tr>
             <th>#</th>

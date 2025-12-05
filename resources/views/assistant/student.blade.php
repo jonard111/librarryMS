@@ -70,6 +70,20 @@
     </div>
 </div>
 
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
 <div class="row g-4 mb-4">
     <h3>Manage Student Record</h3>
     
@@ -154,17 +168,99 @@
     </div>
 </div>
 
+<!-- Additional Statistics: Books & Fines -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 dashboard-card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Books Currently Borrowed</p>
+                        <h3 class="mb-2">{{ $booksCurrentlyBorrowed ?? 0 }}</h3>
+                        <small class="text-muted">Active loans</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-book text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 dashboard-card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Overdue Books</p>
+                        <h3 class="mb-2 text-danger">{{ $overdueBooksCount ?? 0 }}</h3>
+                        <small class="text-muted">Past due date</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-exclamation-triangle text-danger"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 dashboard-card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Total Fines Collected</p>
+                        <h3 class="mb-2 text-success">₱{{ number_format($totalFinesCollected ?? 0, 2) }}</h3>
+                        <small class="text-muted">This month</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-coins text-success"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 dashboard-card shadow-sm stats-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1">Pending Fines</p>
+                        <h3 class="mb-2 text-warning">₱{{ number_format($pendingFines ?? 0, 2) }}</h3>
+                        <small class="text-muted">Unpaid fines</small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-clock text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card card-body">
-    <h5 class="card-title mb-3">Student Overdue</h5>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title mb-0">Student Overdue</h5>
+        <div class="d-flex gap-2">
+            <select class="form-select form-select-sm table-column-filter" data-filter-table="studentTable" data-filter-column="6" style="max-width: 200px;">
+                <option value="">All Status</option>
+                <option value="Payment Required">Payment Required</option>
+                <option value="Overdue">Overdue</option>
+                <option value="No Fines">No Fines</option>
+            </select>
+        </div>
+    </div>
     <div class="table-responsive">
-        <table class="table table-hover align-middle">
+        <table class="table table-hover align-middle filterable-table" data-filter-id="studentTable">
             <thead class="table-light">
                 <tr>
                   <th>ID</th>
                   <th>Name</th>
                   <th>Email</th>
-                  <th>Borrowed</th>
-                  <th>Overdue</th>
+                  <th>Book Title</th>
+                  <th>Due Date</th>
+                  <th>Fine Due</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -175,32 +271,155 @@
                     <td>{{ $record['user']->userId }}</td>
                     <td>{{ $record['user']->first_name }} {{ $record['user']->last_name }}</td>
                     <td>{{ $record['user']->email }}</td>
-                    <td>{{ $record['borrowed_count'] }}</td>
-                    <td>{{ $record['overdue_count'] }}</td>
                     <td>
-                      @if($record['has_overdue'])
-                        <span class="badge bg-danger">Unpaid</span>
+                      <strong>{{ $record['book']->title ?? 'N/A' }}</strong>
+                      @if($record['book']->author)
+                        <br><small class="text-muted">by {{ $record['book']->author }}</small>
+                      @endif
+                    </td>
+                    <td>
+                      @if($record['due_date'])
+                        {{ \Carbon\Carbon::parse($record['due_date'])->format('M d, Y') }}
+                        @if($record['is_overdue'])
+                          <br><small class="text-danger">
+                            {{ \Carbon\Carbon::parse($record['due_date'])->diffForHumans() }}
+                          </small>
+                        @endif
                       @else
-                        <span class="badge bg-success">Paid</span>
+                        <span class="text-muted">N/A</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($record['fine_due'] > 0)
+                        <span class="text-danger fw-bold">₱{{ number_format($record['fine_due'], 2) }}</span>
+                      @else
+                        <span class="text-muted">₱0.00</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($record['requires_payment'])
+                        <span class="badge bg-danger">Payment Required</span>
+                      @elseif($record['is_overdue'])
+                        <span class="badge bg-warning">Overdue</span>
+                      @else
+                        <span class="badge bg-success">No Fines</span>
                       @endif
                     </td>
                     <td>
                       <div class="btn-group" role="group">
-                        @if($record['has_overdue'])
-                          <button class="btn btn-sm btn-outline-success" title="Mark as Paid">
-                            <i class="fas fa-check-circle me-1"></i> Mark as Paid
-                          </button>
+                        @if($record['requires_payment'])
+                          <form action="{{ route('assistant.reservation.settleFine', $record['reservation']->id) }}" 
+                                method="POST" 
+                                class="d-inline settle-fine-form"
+                                id="settleForm{{ $record['reservation']->id }}">
+                            @csrf
+                            @method('PUT')
+                            <button type="submit" 
+                                    class="btn btn-sm btn-outline-success settle-btn" 
+                                    data-reservation-id="{{ $record['reservation']->id }}"
+                                    data-fine-amount="{{ number_format($record['fine_due'], 2) }}"
+                                    title="Settle Fine: ₱{{ number_format($record['fine_due'], 2) }}">
+                              <i class="fas fa-check-circle me-1"></i> Settle (₱{{ number_format($record['fine_due'], 2) }})
+                            </button>
+                          </form>
                         @else
-                          <button class="btn btn-sm btn-outline-primary" title="View Receipt">
-                            <i class="fas fa-receipt me-1"></i> Receipt
-                          </button>
+                          <span class="text-muted">No action needed</span>
                         @endif
                       </div>
                     </td>
                   </tr>
                 @empty
                   <tr>
-                    <td colspan="7" class="text-center text-muted py-4">No borrowing records found.</td>
+                    <td colspan="8" class="text-center text-muted py-4">No borrowing records found.</td>
+                  </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Returned Books Table -->
+<div class="card card-body mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="card-title mb-0">Returned Books History</h5>
+        <div class="d-flex gap-2">
+            <select class="form-select form-select-sm table-column-filter" data-filter-table="returnedBooksTable" data-filter-column="6" style="max-width: 200px;">
+                <option value="">All Books</option>
+                <option value="With Fine">With Fine</option>
+                <option value="No Fine">No Fine</option>
+            </select>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle filterable-table" data-filter-id="returnedBooksTable">
+            <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Book Title</th>
+                  <th>Borrowed Date</th>
+                  <th>Returned Date</th>
+                  <th>Fine Status</th>
+                  <th>Fine Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($returnedBooks as $record)
+                  <tr>
+                    <td>{{ $record['user']->userId }}</td>
+                    <td>{{ $record['user']->first_name }} {{ $record['user']->last_name }}</td>
+                    <td>{{ $record['user']->email }}</td>
+                    <td>
+                      <strong>{{ $record['book']->title ?? 'N/A' }}</strong>
+                      @if($record['book']->author)
+                        <br><small class="text-muted">by {{ $record['book']->author }}</small>
+                      @endif
+                    </td>
+                    <td>
+                      @if($record['pickup_date'])
+                        {{ \Carbon\Carbon::parse($record['pickup_date'])->format('M d, Y') }}
+                      @else
+                        <span class="text-muted">N/A</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($record['return_date'])
+                        {{ \Carbon\Carbon::parse($record['return_date'])->format('M d, Y') }}
+                        <br><small class="text-muted">
+                          {{ \Carbon\Carbon::parse($record['return_date'])->diffForHumans() }}
+                        </small>
+                      @else
+                        <span class="text-muted">N/A</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($record['had_fine'])
+                        @if($record['fine_paid'])
+                          <span class="badge bg-success">Fine Paid</span>
+                        @else
+                          <span class="badge bg-warning">Fine Unpaid</span>
+                        @endif
+                      @else
+                        <span class="badge bg-info">No Fine</span>
+                      @endif
+                    </td>
+                    <td>
+                      @if($record['fine_amount'] > 0)
+                        <span class="text-danger fw-bold">₱{{ number_format($record['fine_amount'], 2) }}</span>
+                        @if($record['fine_paid_at'])
+                          <br><small class="text-success">
+                            Paid: {{ \Carbon\Carbon::parse($record['fine_paid_at'])->format('M d, Y') }}
+                          </small>
+                        @endif
+                      @else
+                        <span class="text-muted">₱0.00</span>
+                      @endif
+                    </td>
+                  </tr>
+                @empty
+                  <tr>
+                    <td colspan="8" class="text-center text-muted py-4">No returned books found.</td>
                   </tr>
                 @endforelse
             </tbody>
@@ -225,6 +444,27 @@
                 });
             });
         }
+        
+        // Handle settle fine form submission
+        const settleForms = document.querySelectorAll('.settle-fine-form');
+        settleForms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                const button = this.querySelector('.settle-btn');
+                const fineAmount = button.getAttribute('data-fine-amount');
+                const reservationId = button.getAttribute('data-reservation-id');
+                
+                if (!confirm('Settle fine of ₱' + fineAmount + ' for reservation ID ' + reservationId + '?')) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show loading state
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+                
+                return true;
+            });
+        });
     });
 </script>
 @include('assistant.partials.profile-modal')

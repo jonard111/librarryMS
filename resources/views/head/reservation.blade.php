@@ -144,9 +144,20 @@
 
         <!-- Book Reservations Table -->
         <div class="card shadow-sm card-body mb-4">
-            <h5 class="card-title p-3">Book Reservations</h5>
+            <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                <h5 class="card-title mb-0">Book Reservations</h5>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm table-column-filter" data-filter-table="headReservationsTable" data-filter-column="4" style="max-width: 200px;">
+                        <option value="">All Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Picked Up">Picked Up</option>
+                        <option value="Returned">Returned</option>
+                    </select>
+                </div>
+            </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle filterable-table" data-filter-id="headReservationsTable">
                     <thead class="table-light">
                         <tr>
                             <th>Student Name</th>

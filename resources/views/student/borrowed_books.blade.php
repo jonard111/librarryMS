@@ -135,10 +135,19 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold mb-0"><i class="fas fa-file-alt me-2"></i>My Book Requests</h5>
-                <small class="text-muted">Total: {{ $bookRequests->count() ?? 0 }} request(s)</small>
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted">Total: {{ $bookRequests->count() ?? 0 }} request(s)</small>
+                    <select class="form-select form-select-sm table-column-filter" data-filter-table="bookRequestsTable" data-filter-column="4" style="max-width: 180px;">
+                        <option value="">All Status</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Ready for Pickup">Ready for Pickup</option>
+                        <option value="Picked Up">Picked Up</option>
+                        <option value="Rejected">Rejected</option>
+                    </select>
+                </div>
             </div>
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table table-hover align-middle filterable-table" data-filter-id="bookRequestsTable">
                     <thead class="table-light">
                         <tr>
                             <th>#</th>
