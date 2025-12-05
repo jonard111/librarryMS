@@ -130,6 +130,35 @@
                         @else
                             <form action="{{ route('faculty.books.reserve', $book->id) }}" method="POST">
                                 @csrf
+                                <div class="mb-3">
+                                    <label for="facultyLoanDurationValue" class="form-label">Select your preferred borrowing period</label>
+                                    <div class="input-group">
+                                        <input 
+                                            type="number" 
+                                            class="form-control @error('loan_duration_value') is-invalid @enderror" 
+                                            id="facultyLoanDurationValue" 
+                                            name="loan_duration_value" 
+                                            value="{{ old('loan_duration_value', 14) }}" 
+                                            min="1" 
+                                            required>
+                                        <select 
+                                            class="form-select @error('loan_duration_unit') is-invalid @enderror" 
+                                            name="loan_duration_unit" 
+                                            required>
+                                            <option value="day" @selected(old('loan_duration_unit', 'day') === 'day')>Day(s)</option>
+                                            <option value="hour" @selected(old('loan_duration_unit') === 'hour')>Hour(s)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text">
+                                        Faculty may borrow up to 60 days or 168 hours (7 days) per loan.
+                                    </div>
+                                    @error('loan_duration_value')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    @error('loan_duration_unit')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
                                 <button type="submit" class="btn btn-success btn-lg w-100">
                                     <i class="fas fa-bookmark me-2"></i>Reserve Now
                                 </button>

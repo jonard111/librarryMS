@@ -38,9 +38,7 @@
     <a href="{{ route('assistant.notification') }}" class="nav-link">
         <i class="fas fa-solid fa-bell me-2"></i><span>Notification</span> 
     </a>
-    <a href="{{ route('assistant.users') }}" class="nav-link">
-        <i class="fas fa-id-card me-2"></i><span>Users</span> 
-    </a>
+
     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link fw-bold logoutLink">
     <i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span>
     </a>
@@ -155,6 +153,7 @@
           <th>Student Name</th>
           <th>Book Title</th>
           <th>Reservation Date</th>
+          <th>Loan Period</th>
           <th>Pickup Deadline</th>
           <th>Status</th>
           <th>Actions</th>
@@ -166,6 +165,7 @@
           <td>{{ $reservation->user->first_name }} {{ $reservation->user->last_name }}</td>
           <td>{{ $reservation->book->title }}</td>
           <td>{{ $reservation->reservation_date ? $reservation->reservation_date->format('M d, Y') : 'N/A' }}</td>
+          <td>{{ $reservation->loan_duration_label }}</td>
           <td>
             @if($reservation->pickup_date)
                 {{ $reservation->pickup_date->copy()->addDays(3)->format('M d, Y') }}
@@ -217,7 +217,7 @@
         </tr>
         @empty
         <tr>
-            <td colspan="6" class="text-center text-muted py-4">
+            <td colspan="7" class="text-center text-muted py-4">
                 <i class="fas fa-info-circle me-2"></i>No reservations found.
             </td>
         </tr>
@@ -237,6 +237,7 @@
           <th>Book Title</th>
           <th>Date Borrowed</th>
           <th>Due Date</th>
+          <th>Loan Period</th>
           <th>Status</th>
           <th>Actions</th>
         </tr>
@@ -248,9 +249,16 @@
           <td>{{ $borrower->book->title }}</td>
           <td>{{ $borrower->pickup_date ? $borrower->pickup_date->format('M d, Y') : 'N/A' }}</td>
           <td>{{ $borrower->due_date ? $borrower->due_date->format('M d, Y') : 'N/A' }}</td>
+          <td>{{ $borrower->loan_duration_label }}</td>
           <td>
-            @if($borrower->due_date && $borrower->due_date->isPast())
-                <span class="badge bg-danger p-2">Overdue</span>
+            @php
+              $isOverdue = $borrower->is_overdue;
+              $requiresPayment = $borrower->has_unsettled_fine;
+            @endphp
+            @if($requiresPayment)
+                <span class="badge bg-danger p-2">Payment Required</span>
+            @elseif($isOverdue)
+                <span class="badge bg-warning text-dark p-2">Overdue – Settled</span>
             @elseif($borrower->due_date && $borrower->due_date->diffInDays(now()) <= 3)
                 <span class="badge bg-warning text-dark p-2">Due Soon</span>
             @else
@@ -258,18 +266,32 @@
             @endif
           </td>
           <td>
-            <form action="{{ route('assistant.reservation.return', $borrower->id) }}" method="POST" class="d-inline">
-                @csrf
-                @method('PUT')
-                <button type="submit" class="btn btn-success btn-sm">
-                    <i class="fas fa-undo-alt me-1"></i> Return
-                </button>
-            </form>
+            <div class="d-flex flex-wrap gap-2">
+              @if($requiresPayment)
+                <form action="{{ route('assistant.reservation.settleFine', $borrower->id) }}" method="POST" class="d-inline">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-coins me-1"></i> Settle ₱{{ number_format($borrower->current_fine, 2) }}
+                    </button>
+                </form>
+              @endif
+              <form action="{{ route('assistant.reservation.return', $borrower->id) }}" method="POST" class="d-inline">
+                  @csrf
+                  @method('PUT')
+                  <button type="submit" class="btn btn-success btn-sm" @if($requiresPayment) disabled @endif>
+                      <i class="fas fa-undo-alt me-1"></i> Return
+                  </button>
+              </form>
+            </div>
+            @if($requiresPayment)
+              <small class="text-danger d-block mt-1">Settle the fine before completing the return.</small>
+            @endif
           </td>
         </tr>
         @empty
         <tr>
-            <td colspan="6" class="text-center text-muted py-4">
+            <td colspan="7" class="text-center text-muted py-4">
                 <i class="fas fa-info-circle me-2"></i>No active borrowers found.
             </td>
         </tr>

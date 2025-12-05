@@ -132,24 +132,157 @@
 
     <br>
 
+    <!-- Alerts Section -->
+    @if(isset($overdueBooks) && $overdueBooks->count() > 0)
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Overdue Books</h5>
+            <p class="mb-2">You have <strong>{{ $overdueBooks->count() }}</strong> overdue book(s). Please return them as soon as possible to avoid additional fines.</p>
+            <ul class="mb-0">
+                @foreach($overdueBooks->take(3) as $overdue)
+                    <li><strong>{{ $overdue->book->title ?? 'N/A' }}</strong> - Due: {{ $overdue->due_date ? $overdue->due_date->format('M d, Y') : 'N/A' }}</li>
+                @endforeach
+            </ul>
+            <a href="{{ route('student.borrowed') }}" class="btn btn-sm btn-outline-danger mt-2">View All</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(isset($booksDueSoon) && $booksDueSoon->count() > 0)
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-clock me-2"></i>Books Due Soon</h5>
+            <p class="mb-2">You have <strong>{{ $booksDueSoon->count() }}</strong> book(s) due within the next 3 days.</p>
+            <ul class="mb-0">
+                @foreach($booksDueSoon->take(3) as $due)
+                    <li><strong>{{ $due->book->title ?? 'N/A' }}</strong> - Due: {{ $due->due_date ? $due->due_date->format('M d, Y') : 'N/A' }}</li>
+                @endforeach
+            </ul>
+            <a href="{{ route('student.borrowed') }}" class="btn btn-sm btn-outline-warning mt-2">View All</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(isset($readyForPickup) && $readyForPickup->count() > 0)
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Books Ready for Pickup</h5>
+            <p class="mb-2">You have <strong>{{ $readyForPickup->count() }}</strong> approved book(s) ready for pickup!</p>
+            <ul class="mb-0">
+                @foreach($readyForPickup as $pickup)
+                    <li><strong>{{ $pickup->book->title ?? 'N/A' }}</strong></li>
+                @endforeach
+            </ul>
+            <a href="{{ route('student.borrowed') }}" class="btn btn-sm btn-outline-success mt-2">View Details</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Quick Stats Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-book-reader fa-2x text-primary mb-2"></i>
+                    <h4 class="mb-1">{{ $totalBooksRead ?? 0 }}</h4>
+                    <small class="text-muted">Total Books Read</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-bookmark fa-2x text-warning mb-2"></i>
+                    <h4 class="mb-1">{{ $readingList->count() ?? 0 }}</h4>
+                    <small class="text-muted">In Reading List</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-circle fa-2x text-danger mb-2"></i>
+                    <h4 class="mb-1">{{ isset($overdueBooks) ? $overdueBooks->count() : 0 }}</h4>
+                    <small class="text-muted">Overdue Books</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Announcements -->
+    @if(isset($recentAnnouncements) && $recentAnnouncements->count() > 0)
+        <section class="mb-4">
+            <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h3 class="mb-2 mb-md-0"><i class="fas fa-bullhorn me-2"></i>Recent Announcements</h3>
+                <a href="{{ route('student.notifications') }}" class="btn btn-outline-primary btn-sm">View All</a>
+            </div>
+            <div class="row g-3">
+                @foreach($recentAnnouncements as $announcement)
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-{{ $announcement->type === 'info' ? 'info' : ($announcement->type === 'warning' ? 'warning' : 'primary') }}">
+                                        {{ ucfirst($announcement->type ?? 'General') }}
+                                    </span>
+                                    <small class="text-muted">{{ $announcement->created_at->diffForHumans() }}</small>
+                                </div>
+                                <h6 class="card-title">{{ $announcement->title }}</h6>
+                                <p class="card-text text-muted small">{{ \Illuminate\Support\Str::limit($announcement->content, 100) }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     <!-- My Reading List -->
     <section>
       <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
-        <h3 class="mb-2 mb-md-0">My Reading List</h3>
+        <h3 class="mb-2 mb-md-0"><i class="fas fa-bookmark me-2"></i>My Reading List</h3>
+        @if($readingList->count() > 0)
+          <a href="{{ route('student.reading-list') }}" class="btn btn-outline-primary btn-sm">View All</a>
+        @endif
       </div>
       <div class="row row-cols-2 row-cols-md-6 g-3">
-        @foreach($readingList as $book)
-        <div class="col-12 col-sm-6 col-md-3 mb-4">
-          <div class="card card-wrapper shadow dashboard-card">
-            <img src="{{ Vite::asset('resources/images/' . $book->cover) }}" class="card-img-top" alt="{{ $book->title }}">
-            <div class="card-body p-2">
-              <h5 class="card-title mb-1">{{ $book->title }}</h5>
-              <small class="card-subtitle text-muted">{{ $book->author }}</small>
+        @forelse($readingList as $readingListItem)
+          @if($readingListItem->book)
+            <div class="col-12 col-sm-6 col-md-3 mb-4">
+              <div class="card card-wrapper shadow dashboard-card position-relative">
+                <span class="badge-status badge-completed">Saved</span>
+                <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
+                  <img src="{{ $readingListItem->book->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
+                       class="card-img-top" 
+                       alt="{{ $readingListItem->book->title }}"
+                       style="width: 100%; height: 100%; object-fit: cover; display: block;" 
+                       onerror="this.onerror=null; this.src='{{ Vite::asset('resources/images/bookcover3.jpg') }}';" />
+                </div>
+                <div class="card-body p-2">
+                  <h5 class="card-title mb-1 text-truncate">{{ $readingListItem->book->title }}</h5>
+                  <small class="card-subtitle text-muted">{{ $readingListItem->book->author }}</small>
+                </div>
+                <div class="d-flex gap-2 m-2">
+                  <a href="{{ route('student.books.show', $readingListItem->book->id) }}" class="btn btn-outline-primary btn-sm flex-fill">
+                    <i class="fas fa-eye me-1"></i> View
+                  </a>
+                  <form action="{{ route('student.reading-list.remove', $readingListItem->book->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Remove this book from your reading list?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove from reading list">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
-            <button class="btn btn-outline-success btn-sm m-2">Continue Reading</button>
+          @endif
+        @empty
+          <div class="col-12">
+            <div class="alert alert-light border text-center">
+              <i class="fas fa-bookmark me-2 text-muted"></i>
+              <p class="mb-0">Your reading list is empty. Start adding books you want to read!</p>
+              <a href="{{ route('student.books') }}" class="btn btn-outline-primary btn-sm mt-2">Browse Books</a>
+            </div>
           </div>
-        </div>
-        @endforeach
+        @endforelse
       </div>
     </section>
 

@@ -85,6 +85,11 @@
         <section id="{{ $id }}">
             <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
                 <h3 class="mb-2 mb-md-0">{{ $title }}</h3>
+                @if ($loop->first)
+                    <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addEBookModal">
+                        <i class="fas fa-plus-circle"></i> Add New E-Book
+                    </button>
+                @endif
             </div>
 
             <div class="row row-cols-2 row-cols-md-6 g-3">
@@ -136,6 +141,57 @@
         @endforeach
 
     </div> 
+
+    <!-- Add New E-Book Modal -->
+    <div class="modal fade" id="addEBookModal" tabindex="-1" aria-labelledby="addEBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addEBookModalLabel">
+                        <i class="fas fa-tablet-alt me-2 text-info"></i> Add New E-Book
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addNewEBookForm" action="{{ route('assistant.ebooks.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="ebookTitle" class="form-label">Book Title</label>
+                            <input type="text" class="form-control" id="ebookTitle" name="title" value="{{ old('title') }}" placeholder="Enter the exact title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ebookAuthor" class="form-label">Author Name</label>
+                            <input type="text" class="form-control" id="ebookAuthor" name="author" value="{{ old('author') }}" placeholder="e.g., James Clear" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ebookFile" class="form-label">E-Book File Upload</label>
+                            <input class="form-control" type="file" id="ebookFile" name="ebook_file" accept=".pdf,.epub,.mobi" required>
+                            <div class="form-text">Accepted formats: PDF, EPUB, MOBI. File size limit: 50MB.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ebookCover" class="form-label">Book Cover Image (Optional)</label>
+                            <input class="form-control" type="file" id="ebookCover" name="cover" accept="image/jpeg,image/png">
+                        </div>
+                        <div class="mb-0">
+                            <label for="ebookCategory" class="form-label">Category</label>
+                            <select class="form-select" id="ebookCategory" name="category" required>
+                                <option selected disabled value="">Choose...</option>
+                                @foreach($categories as $slug => $label)
+                                    <option value="{{ $slug }}" @selected(old('category') === $slug)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success text-white">
+                            <i class="fas fa-cloud-upload-alt me-2"></i> Upload E-Book
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Edit E-Book Modal -->
     <div class="modal fade" id="editEBookModal" tabindex="-1" aria-labelledby="editEBookModalLabel" aria-hidden="true">
@@ -221,7 +277,6 @@
                 });
             });
         });
-    });
 
     // Search functionality for ebooks
     const searchEbookInput = document.getElementById('searchEbookInput');

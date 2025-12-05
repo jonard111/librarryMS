@@ -97,6 +97,7 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
     Route::get('/books', [BookController::class, 'index'])->name('books');
     Route::get('/books/all', [BookController::class, 'allBooks'])->name('books.all');
     Route::get('/books/{id}', [BookController::class, 'show'])->name('books.show');
+    Route::get('/books/{id}/check-reservation', [BookController::class, 'checkReservation'])->name('books.checkReservation');
     Route::post('/books/{id}/reserve', [BookController::class, 'reserve'])->name('books.reserve');
     
     // Ebooks
@@ -113,6 +114,11 @@ Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')
         return redirect()->route('student.borrowed');
     })->name('requests');
     Route::delete('/requests/{id}/cancel', [BookController::class, 'cancelRequest'])->name('requests.cancel');
+    
+    // Reading List
+    Route::get('/reading-list', [\App\Http\Controllers\Student\ReadingListController::class, 'index'])->name('reading-list');
+    Route::post('/reading-list/{bookId}/add', [\App\Http\Controllers\Student\ReadingListController::class, 'add'])->name('reading-list.add');
+    Route::delete('/reading-list/{bookId}/remove', [\App\Http\Controllers\Student\ReadingListController::class, 'remove'])->name('reading-list.remove');
     
     // Notifications & Announcements
     Route::get('/announcements', function () {
@@ -161,12 +167,14 @@ Route::middleware(['auth', 'role:assistant'])->prefix('assistant')->name('assist
     
     // Books Management
     Route::get('/all-books', [AssistantController::class, 'allBooks'])->name('allBooks');
+    Route::post('/all-books', [InventoryController::class, 'storeBook'])->name('books.store');
     Route::get('/all-books/{book}/edit', [InventoryController::class, 'editBook'])->name('books.edit');
     Route::put('/all-books/{book}', [InventoryController::class, 'updateBook'])->name('books.update');
     Route::delete('/all-books/{book}', [InventoryController::class, 'destroyBook'])->name('books.destroy');
     
     // Ebooks Management
     Route::get('/all-ebooks', [AssistantController::class, 'allEbooks'])->name('allEbooks');
+    Route::post('/all-ebooks', [InventoryController::class, 'storeEbook'])->name('ebooks.store');
     Route::get('/all-ebooks/{ebook}/edit', [InventoryController::class, 'editEbook'])->name('ebooks.edit');
     Route::put('/all-ebooks/{ebook}', [InventoryController::class, 'updateEbook'])->name('ebooks.update');
     Route::delete('/all-ebooks/{ebook}', [InventoryController::class, 'destroyEbook'])->name('ebooks.destroy');
@@ -179,12 +187,12 @@ Route::middleware(['auth', 'role:assistant'])->prefix('assistant')->name('assist
     Route::put('/reservation/{id}/approve-request', [AssistantController::class, 'approveRequest'])->name('reservation.approveRequest');
     Route::put('/reservation/{id}/approve', [AssistantController::class, 'approveReservation'])->name('reservation.approve');
     Route::put('/reservation/{id}/return', [AssistantController::class, 'returnBook'])->name('reservation.return');
+    Route::put('/reservation/{id}/settle-fine', [AssistantController::class, 'settleFine'])->name('reservation.settleFine');
     Route::delete('/reservation/{id}', [AssistantController::class, 'destroyReservation'])->name('reservation.destroy');
     
     // Additional Features
     Route::get('/manage-books', [AssistantController::class, 'manageBooks'])->name('manageBooks');
     Route::get('/student', [AssistantController::class, 'student'])->name('student');
-    Route::get('/users', [AssistantController::class, 'users'])->name('users');
     Route::get('/notification', [AssistantController::class, 'notification'])->name('notification');
     Route::get('/announcement', [AssistantController::class, 'announcement'])->name('announcement');
 });

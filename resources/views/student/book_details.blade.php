@@ -120,13 +120,62 @@
 
                         <hr>
 
+                        <!-- Reading List Actions -->
+                        <div class="mb-3">
+                            @if($inReadingList ?? false)
+                                <form action="{{ route('student.reading-list.remove', $book->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-outline-warning">
+                                        <i class="fas fa-bookmark me-2"></i>Remove from Reading List
+                                    </button>
+                                </form>
+                            @else
+                                <form action="{{ route('student.reading-list.add', $book->id) }}" method="POST" class="d-inline">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        <i class="fas fa-bookmark me-2"></i>Add to Reading List
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+
                         @if($hasReservation)
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i>You already have an active reservation for this book.
                             </div>
                         @else
-                            <form action="{{ route('student.books.reserve', $book->id) }}" method="POST">
+                            <form action="{{ route('student.books.reserve', $book->id) }}" method="POST" onsubmit="return confirmReservation(this, event)">
                                 @csrf
+                                <div class="mb-3">
+                                    <label for="loanDurationValue" class="form-label">How long would you like to borrow this book?</label>
+                                    <div class="input-group">
+                                        <input 
+                                            type="number" 
+                                            class="form-control @error('loan_duration_value') is-invalid @enderror" 
+                                            id="loanDurationValue" 
+                                            name="loan_duration_value" 
+                                            value="{{ old('loan_duration_value', 7) }}" 
+                                            min="1" 
+                                            required>
+                                        <select 
+                                            class="form-select @error('loan_duration_unit') is-invalid @enderror" 
+                                            name="loan_duration_unit" 
+                                            required>
+                                            <option value="day" @selected(old('loan_duration_unit', 'day') === 'day')>Day(s)</option>
+                                            <option value="hour" @selected(old('loan_duration_unit') === 'hour')>Hour(s)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-text">
+                                        Students may borrow up to 30 days or 72 hours at a time.
+                                    </div>
+                                    @error('loan_duration_value')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                    @error('loan_duration_unit')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
+                                </div>
                                 <button type="submit" class="btn btn-success btn-lg w-100">
                                     <i class="fas fa-bookmark me-2"></i>Reserve Now
                                 </button>
@@ -140,6 +189,39 @@
 
     @include('student.partials.profile-modal')
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmReservation(form, event) {
+            const durationValue = document.getElementById('loanDurationValue').value;
+            const durationUnit = document.querySelector('[name="loan_duration_unit"]').value;
+            const bookTitle = '{{ $book->title }}';
+            
+            // Validate duration
+            if (!durationValue || durationValue < 1) {
+                event.preventDefault();
+                alert('Please enter a valid loan duration.');
+                return false;
+            }
+            
+            const maxAllowed = durationUnit === 'hour' ? 72 : 30;
+            if (parseInt(durationValue) > maxAllowed) {
+                event.preventDefault();
+                alert(durationUnit === 'hour' 
+                    ? 'Hourly loans are limited to 72 hours.' 
+                    : 'Daily loans are limited to 30 days.');
+                return false;
+            }
+            
+            // Show confirmation dialog
+            const confirmMessage = `Are you sure you want to reserve "${bookTitle}" for ${durationValue} ${durationUnit === 'hour' ? 'hour(s)' : 'day(s)'}?`;
+            
+            if (!confirm(confirmMessage)) {
+                event.preventDefault();
+                return false;
+            }
+            
+            return true;
+        }
+    </script>
 </body>
 </html>
 

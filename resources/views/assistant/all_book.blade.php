@@ -84,6 +84,11 @@
             <section id="{{ $slug }}"> 
                 <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
                     <h3 class="mb-2 mb-md-0">{{ $label }}</h3>
+                    @if ($loop->first)
+                        <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addBookModal">
+                            <i class="fas fa-plus-circle"></i> Add New Book
+                        </button>
+                    @endif
                 </div>
 
                 <div class="row row-cols-2 row-cols-md-6 g-3">
@@ -140,6 +145,67 @@
         @endforeach
 
     </div> 
+
+    <!-- Add New Book Modal -->
+    <div class="modal fade" id="addBookModal" tabindex="-1" aria-labelledby="addBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addBookModalLabel">
+                        <i class="fas fa-book-medical me-2 text-success"></i> Add New Book Inventory
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="addNewBookForm" action="{{ route('assistant.books.store') }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="bookTitle" class="form-label">Book Title</label>
+                            <input type="text" class="form-control" id="bookTitle" name="title" value="{{ old('title') }}" placeholder="Enter the exact title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bookAuthor" class="form-label">Author Name</label>
+                            <input type="text" class="form-control" id="bookAuthor" name="author" value="{{ old('author') }}" placeholder="e.g., James Clear" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bookIsbn" class="form-label">ISBN-13</label>
+                            <input type="text" class="form-control" id="bookIsbn" name="isbn" value="{{ old('isbn') }}" placeholder="e.g., 978-0735211292">
+                        </div>
+                        <div class="mb-3">
+                            <label for="bookCover" class="form-label">Book Cover Image</label>
+                            <input class="form-control" type="file" id="bookCover" name="cover" accept="image/jpeg, image/png, image/webp">
+                            <div class="form-text">Accepted formats: JPG, PNG, WEBP. Max size: 2MB.</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="bookCategory" class="form-label">Category</label>
+                                <select class="form-select" id="bookCategory" name="category" required>
+                                    <option selected disabled value="">Choose...</option>
+                                    @foreach($categories as $slug => $label)
+                                        <option value="{{ $slug }}" @selected(old('category') === $slug)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="numCopies" class="form-label">Number of Copies</label>
+                                <input type="number" class="form-control" id="numCopies" name="copies" min="1" value="{{ old('copies', 1) }}" required>
+                            </div>
+                        </div>
+                        <div class="mb-0">
+                            <label for="bookPublisher" class="form-label">Publisher</label>
+                            <input type="text" class="form-control" id="bookPublisher" name="publisher" value="{{ old('publisher') }}" placeholder="e.g., Penguin Books">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-plus-circle me-2"></i> Add Book
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Edit Book Modal -->
     <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">

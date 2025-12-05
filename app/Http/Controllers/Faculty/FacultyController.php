@@ -9,6 +9,7 @@ use App\Models\Ebook;
 use App\Models\BookReservation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class FacultyController extends Controller
 {
@@ -126,7 +127,7 @@ class FacultyController extends Controller
             ->first();
         
         if ($existingReservation) {
-            return back()->with('error', 'You already have an active reservation for this book.');
+            return back()->with('error', 'You already have an active reservation for this book.')->withInput();
         }
         
         $reservedCopies = BookReservation::where('book_id', $id)
@@ -134,14 +135,33 @@ class FacultyController extends Controller
             ->count();
         
         if ($reservedCopies >= $book->copies) {
-            return back()->with('error', 'No copies available for reservation at the moment.');
+            return back()->with('error', 'No copies available for reservation at the moment.')->withInput();
         }
         
+        $validated = $request->validate([
+            'loan_duration_value' => ['required', 'integer', 'min:1'],
+            'loan_duration_unit' => ['required', Rule::in(['day', 'hour'])],
+        ]);
+
+        $maxAllowed = $validated['loan_duration_unit'] === 'hour' ? 168 : 60;
+
+        if ($validated['loan_duration_value'] > $maxAllowed) {
+            return back()
+                ->withErrors([
+                    'loan_duration_value' => $validated['loan_duration_unit'] === 'hour'
+                        ? 'Hourly faculty loans are limited to 168 hours (7 days).'
+                        : 'Daily faculty loans are limited to 60 days.',
+                ])
+                ->withInput();
+        }
+
         BookReservation::create([
             'user_id' => Auth::id(),
             'book_id' => $id,
             'status' => 'pending',
             'reservation_date' => now(),
+            'loan_duration' => $validated['loan_duration_value'],
+            'loan_duration_unit' => $validated['loan_duration_unit'],
         ]);
         
         return back()->with('success', 'Book reservation requested successfully!');

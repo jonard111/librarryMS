@@ -65,6 +65,20 @@
         </div>
      </div>
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <!-- Borrowed Books Table -->
     <div class="card border-0 shadow-sm mb-4">
       <div class="card-body">
@@ -119,7 +133,10 @@
     <!-- Request Books Table -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <h5 class="fw-bold mb-3"><i class="fas fa-file-alt me-2"></i>My Book Requests</h5>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="fas fa-file-alt me-2"></i>My Book Requests</h5>
+                <small class="text-muted">Total: {{ $bookRequests->count() ?? 0 }} request(s)</small>
+            </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
@@ -134,11 +151,23 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($bookRequests ?? collect() as $index => $request)
+                        @php
+                            // Debug: Check if we have requests
+                            $hasRequests = isset($bookRequests) && $bookRequests->count() > 0;
+                        @endphp
+                        @if(!$hasRequests)
+                            <tr>
+                                <td colspan="7" class="text-center py-4">
+                                    <i class="fas fa-info-circle me-2 text-muted"></i>No book requests yet.
+                                    <br><small class="text-muted">Your reservations will appear here once you make a request.</small>
+                                </td>
+                            </tr>
+                        @else
+                        @foreach($bookRequests as $index => $request)
                         <tr>
                             <th>{{ $index + 1 }}</th>
-                            <td>{{ $request->book->title ?? 'N/A' }}</td>
-                            <td>{{ $request->book->author ?? 'N/A' }}</td>
+                            <td>{{ $request->book ? $request->book->title : 'Book Not Found (ID: ' . $request->book_id . ')' }}</td>
+                            <td>{{ $request->book ? $request->book->author : 'N/A' }}</td>
                             <td>{{ $request->reservation_date ? $request->reservation_date->format('Y-m-d') : ($request->created_at ? $request->created_at->format('Y-m-d') : 'N/A') }}</td>
                             <td>
                               @if($request->status == 'pending')
@@ -176,13 +205,8 @@
                               @endif
                             </td>
                         </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7" class="text-center py-4">
-                              <i class="fas fa-info-circle me-2 text-muted"></i>No book requests yet.
-                            </td>
-                        </tr>
-                        @endforelse
+                        @endforeach
+                        @endif
                     </tbody>
                 </table>
             </div>

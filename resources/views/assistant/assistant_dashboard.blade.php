@@ -38,9 +38,7 @@
     <a href="{{ route('assistant.notification') }}" class="nav-link">
         <i class="fas fa-solid fa-bell me-2"></i><span>Notification</span> 
       </a>
-    <a href="{{ route('assistant.users') }}" class="nav-link">
-      <i class="fas fa-id-card me-2"></i><span>Users</span> 
-    </a>
+
     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link fw-bold logoutLink">
     <i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span>
     </a>
