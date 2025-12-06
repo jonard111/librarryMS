@@ -12,77 +12,115 @@ class StudentRecordController extends Controller
 {
     public function index()
     {
-        // Get all students
+        $now = Carbon::now();
+        $lastMonth = $now->copy()->subMonth();
+
+        // --- 1. Current Month/Total Student Counts ---
         $students = User::where('role', 'student')->get();
-        
-        // Calculate statistics
         $totalStudents = $students->count();
         $activeStudents = $students->where('account_status', 'approved')->count();
         $inactiveStudents = $students->whereIn('account_status', ['pending', 'rejected'])->count();
         
-        // New students this month
-        $newStudents = $students->filter(function ($student) {
-            return Carbon::parse($student->registration_date)->isCurrentMonth();
-        })->count();
+        // New students: Registered during the CURRENT calendar month
+        $newStudents = User::where('role', 'student')
+            ->whereBetween('registration_date', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()])
+            ->count();
         
-        // Get student borrowing records with relationships
+        // --- 2. Last Month's Baseline Counts (for Comparison) ---
+        
+        $studentsBeforeThisMonth = User::where('role', 'student')
+            ->where('registration_date', '<', $now->copy()->startOfMonth())
+            ->get(); 
+        
+        $totalLastMonth = $studentsBeforeThisMonth->count();
+        $activeLastMonth = $studentsBeforeThisMonth->where('account_status', 'approved')->count();
+        $inactiveLastMonth = $studentsBeforeThisMonth->whereIn('account_status', ['pending', 'rejected'])->count();
+        
+        // New students LAST MONTH: Registered during the PREVIOUS calendar month
+        $newLastMonth = User::where('role', 'student')
+            ->whereBetween('registration_date', [$lastMonth->copy()->startOfMonth(), $lastMonth->copy()->endOfMonth()])
+            ->count();
+        
+        // --- 3. Percentage Change Calculation Function ---
+
+        $calculateChange = function ($current, $previous) {
+            if ($previous === 0) {
+                return $current > 0 ? 100 : 0; 
+            }
+            return round((($current - $previous) / $previous) * 100, 1);
+        };
+        
+        $totalChange    = $calculateChange($totalStudents, $totalLastMonth);
+        $activeChange   = $calculateChange($activeStudents, $activeLastMonth);
+        $inactiveChange = $calculateChange($inactiveStudents, $inactiveLastMonth);
+        $newChange      = $calculateChange($newStudents, $newLastMonth);
+        
+        
+        // --- 4. Overdue/Active Borrowing Records (for the Overdue table) ---
+        // Fetches books currently out, are overdue, and calculates fines. (Similar to Assistant Logic)
         $borrowingRecords = BookReservation::with(['user', 'book'])
-            ->whereHas('user', function ($query) {
-                $query->where('role', 'student');
-            })
-            ->whereIn('status', ['picked_up', 'approved'])
+            ->whereHas('user', fn($q) => $q->where('role', 'student'))
+            ->where('status', 'picked_up')
+            ->whereNull('return_date')
+            ->where('due_date', '<', $now) // Filter for currently overdue
+            ->orderBy('due_date', 'asc')
             ->get()
-            ->groupBy('user_id')
-            ->map(function ($reservations, $userId) {
-                $user = $reservations->first()->user;
-                $borrowedCount = $reservations->where('status', 'picked_up')->count();
-                
-                // Calculate overdue books
-                $overdueCount = $reservations->filter(function ($reservation) {
-                    if ($reservation->status === 'picked_up' && $reservation->due_date) {
-                        return Carbon::parse($reservation->due_date)->isPast() && !$reservation->return_date;
-                    }
-                    return false;
-                })->count();
-                
-                // Determine payment status (for now, based on overdue)
-                $hasOverdue = $overdueCount > 0;
+            ->map(function ($r) {
+                $fineDue = $r->isOverdue() ? $r->calculateFine() : 0.0;
                 
                 return [
-                    'user' => $user,
-                    'borrowed_count' => $borrowedCount,
-                    'overdue_count' => $overdueCount,
-                    'has_overdue' => $hasOverdue,
-                    'reservations' => $reservations,
+                    'reservation' => $r,
+                    'user'        => $r->user,
+                    'book'        => $r->book,
+                    'is_overdue'  => $r->isOverdue(),
+                    'has_unsettled_fine' => $r->hasUnsettledFine(),
+                    'fine_due'    => round($fineDue, 2),
+                    'requires_payment' => $r->hasUnsettledFine(),
+                    'due_date'    => $r->due_date,
                 ];
-            })
-            ->values();
+            });
+
+        // --- 5. Returned Books History (for the History table) ---
+        $returnedBooks = BookReservation::with(['user', 'book'])
+            ->whereHas('user', fn($q) => $q->where('role', 'student'))
+            ->where('status', 'returned')
+            ->orderBy('return_date', 'desc')
+            ->get()
+            ->map(function ($r) {
+                $hadFine = $r->fine_amount > 0;
+                $finePaid = $r->fine_paid_at !== null;
+
+                return [
+                    'user'        => $r->user,
+                    'book'        => $r->book,
+                    'pickup_date' => $r->pickup_date,
+                    'return_date' => $r->return_date,
+                    'fine_amount' => $r->fine_amount,
+                    'fine_paid_at'=> $r->fine_paid_at,
+                    'had_fine'    => $hadFine,
+                    'fine_paid'   => $finePaid,
+                ];
+            });
+
+
+        // --- 6. Additional Statistics (for the secondary stat cards) ---
+        $booksCurrentlyBorrowed = BookReservation::where('status', 'picked_up')->whereNull('return_date')->count();
+        $overdueBooksCount = $borrowingRecords->count(); // Already calculated above
         
-        // Calculate percentage changes (simplified - comparing to last month)
-        $lastMonthTotal = User::where('role', 'student')
-            ->where('registration_date', '<', Carbon::now()->startOfMonth())
-            ->count();
-        $totalChange = $lastMonthTotal > 0 ? round((($totalStudents - $lastMonthTotal) / $lastMonthTotal) * 100) : 0;
-        
-        $lastMonthActive = User::where('role', 'student')
-            ->where('account_status', 'approved')
-            ->where('registration_date', '<', Carbon::now()->startOfMonth())
-            ->count();
-        $activeChange = $lastMonthActive > 0 ? round((($activeStudents - $lastMonthActive) / $lastMonthActive) * 100) : 0;
-        
-        $lastMonthInactive = User::where('role', 'student')
-            ->whereIn('account_status', ['pending', 'rejected'])
-            ->where('registration_date', '<', Carbon::now()->startOfMonth())
-            ->count();
-        $inactiveChange = $lastMonthInactive > 0 ? round((($inactiveStudents - $lastMonthInactive) / $lastMonthInactive) * 100) : 0;
-        
-        $lastMonthNew = User::where('role', 'student')
-            ->whereBetween('registration_date', [
-                Carbon::now()->subMonth()->startOfMonth(),
-                Carbon::now()->subMonth()->endOfMonth()
-            ])
-            ->count();
-        $newChange = $lastMonthNew > 0 ? round((($newStudents - $lastMonthNew) / $lastMonthNew) * 100) : 0;
+        $totalFinesCollected = round(
+            BookReservation::whereNotNull('fine_paid_at')
+                ->whereMonth('fine_paid_at', $now->month)
+                ->sum('fine_amount'),
+            2
+        );
+        $pendingFines = round(
+            BookReservation::where('status', 'picked_up')
+                ->whereNull('return_date')
+                ->where('due_date', '<', $now)
+                ->get()
+                ->sum(fn($r) => $r->calculateFine()),
+            2
+        );
         
         return view('head.student_record', [
             'totalStudents' => $totalStudents,
@@ -93,8 +131,17 @@ class StudentRecordController extends Controller
             'activeChange' => $activeChange,
             'inactiveChange' => $inactiveChange,
             'newChange' => $newChange,
-            'borrowingRecords' => $borrowingRecords,
+            'borrowingRecords' => $borrowingRecords, // Overdue/Active Loans
+            'returnedBooks' => $returnedBooks, // History Table
+            
+            // Additional Stats
+            'booksCurrentlyBorrowed' => $booksCurrentlyBorrowed,
+            'overdueBooksCount' => $overdueBooksCount,
+            'totalFinesCollected' => $totalFinesCollected,
+            'pendingFines' => $pendingFines,
         ]);
     }
+    
+    // NOTE: This controller needs methods for approving/rejecting accounts if the Head is 
+    // responsible for that, but those routes/methods are currently not present.
 }
-

@@ -54,11 +54,13 @@
   <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
       <div class="d-flex align-items-center gap-2">
         <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
+        {{-- FIXED: Use text-primary for Coastal Blue theme --}}
         <h3 class="mb-0 fw-semibold text-success">Notifications</h3>
       </div>
 
       <div class="d-flex align-items-center gap-2">
         <div class="text-end">
+          {{-- FIXED: Use text-primary for Coastal Blue theme --}}
           <span class="fw-bold text-success d-block">Library MS</span>
           <small class="text-muted">Management System</small>
         </div>
@@ -70,19 +72,41 @@
     <div class="list-group list-group-flush" id="notificationList">
       @forelse($notifications as $notification)
         @php
-            $badge = $notification->badgeClass();
-            $statusLabel = $notification->statusLabel();
-            $postedBy = $notification->creator
-                ? $notification->creator->first_name . ' ' . $notification->creator->last_name
-                : 'System';
-            $dateLabel = optional($notification->publish_at)->diffForHumans() ?? 'Just now';
+            // Check if the notification is a database Model (Announcement) or a custom object
+            $isAnnouncement = method_exists($notification, 'badgeClass');
+
+            if ($isAnnouncement) {
+                // Logic for Announcement Model
+                $badge = $notification->badgeClass();
+                $statusLabel = $notification->statusLabel();
+                $postedBy = $notification->creator
+                    ? $notification->creator->first_name . ' ' . $notification->creator->last_name
+                    : 'System';
+                $bodyText = strip_tags($notification->body);
+            } else {
+                // Logic for Custom Alert Object (from controller aggregation)
+                $statusMap = match($notification->type) {
+                    'reservation_pending' => ['badge' => 'warning', 'label' => 'New Request'],
+                    'overdue_alert'       => ['badge' => 'danger', 'label' => 'Overdue Alert'],
+                    default               => ['badge' => 'primary', 'label' => 'System Alert'],
+                };
+
+                $badge = $statusMap['badge'];
+                $statusLabel = $statusMap['label'];
+                $postedBy = 'System/Task';
+                $bodyText = $notification->body;
+            }
+            
+            $dateLabel = optional($notification->created_at)->diffForHumans() ?? 'Just now';
+            $publishDate = optional($notification->created_at)->format('M d, Y');
+
         @endphp
         <div class="list-group-item list-group-item-action py-3 d-flex align-items-center">
           <div class="d-flex align-items-center me-3 flex-grow-1 overflow-hidden">
             <div class="me-3 overflow-hidden">
               <h6 class="mb-0 text-truncate fw-bold">{{ $notification->title }}</h6>
               <span class="text-muted small text-truncate d-none d-lg-inline-block">
-                {{ $postedBy }} • {{ optional($notification->publish_at)->format('M d, Y') }} • {{ \Illuminate\Support\Str::limit(strip_tags($notification->body), 160) }}
+                {{ $postedBy }} • {{ $publishDate }} • {{ \Illuminate\Support\Str::limit($bodyText, 160) }}
               </span>
               <span class="text-muted small d-lg-none">{{ $dateLabel }}</span>
             </div>
@@ -102,7 +126,3 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
-
-
-
-

@@ -56,11 +56,13 @@
 
       <div class="d-flex align-items-center gap-2">
         <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
+        {{-- Updated color class to match Coastal Blue theme --}}
         <h3 class="mb-0 fw-semibold text-success">Welcome Assistant</h3>
       </div>
 
     <div class="d-flex align-items-center gap-2">
         <div class="text-end">
+          {{-- Updated color class to match Coastal Blue theme --}}
           <span class="fw-bold text-success d-block">Library MS</span>
           <small class="text-muted">Management System</small>
         </div>
@@ -68,7 +70,8 @@
       </div>
     </div>
 
-   <div class="row g-4">
+   <div class="row g-4 mb-4">
+      {{-- 1. Total Books --}}
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -84,6 +87,7 @@
         </div>
       </div>
 
+      {{-- 2. Active Reservations --}}
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -99,6 +103,7 @@
         </div>
       </div>
     
+      {{-- 3. Books Borrowed --}}
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -114,6 +119,7 @@
         </div>
       </div>
     
+      {{-- 4. E-Books --}}
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -130,6 +136,46 @@
       </div>
    </div>
 
+{{-- ENHANCEMENT: Action/Quick Link Cards --}}
+{{-- Note: These statistics are ideally derived from running the same queries found in AssistantController@reservation to be fully dynamic. Assuming the main stats are accurate, these link to the relevant page. --}}
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ route('assistant.reservation') }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm stats-card dashboard-card-blue">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1 fw-bold">Pending Requests</p>
+                        <h3 class="mb-2 text-primary">{{ $activeReservations }}</h3>
+                        <small class="text-muted">Needs immediate approval</small>
+                    </div>
+                    <div class="stats-icon dashboard-icon-blue">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <a href="{{ route('assistant.student') }}" class="text-decoration-none">
+            <div class="card border-0 shadow-sm stats-card dashboard-card-orange">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted small mb-1 fw-bold">Overdue Books</p>
+                        {{-- Note: Requires running the overdue count query from AssistantController@reservation --}}
+                        <h3 class="mb-2 text-danger">{{ \App\Models\BookReservation::where('status', 'picked_up')->whereNull('return_date')->where('due_date', '<', now())->count() }}</h3>
+                        <small class="text-muted">Students requiring attention</small>
+                    </div>
+                    <div class="stats-icon dashboard-icon-orange">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+
 <div class="card shadow-sm card-body mt-4">
     <div class="card-body">
         <h5 class="fw-bold mb-3">Recent Library Transactions</h5>
@@ -143,31 +189,36 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>Oct 4, 10:15 AM</td>
-                        <td><i class="fas fa-book-reader text-primary"></i> Borrowed</td>
-                        <td>John Paul Mendoza borrowed <strong>“I Keep Waking Up At 2 AM”</strong></td>
-                    </tr>
-                    <tr>
-                        <td>Oct 4, 9:30 AM</td>
-                        <td><i class="fas fa-undo-alt text-success"></i> Returned</td>
-                        <td>Jonard Basillote returned <strong>“Atomic Habits”</strong> <span class="text-danger">(2 days overdue)</span></td>
-                    </tr>
-                    <tr>
-                        <td>Oct 4, 9:35 AM</td>
-                        <td><i class="fas fa-wallet text-warning"></i> Fine Paid</td>
-                        <td>₱100.00 fine paid by Jonard Basillote.</td>
-                    </tr>
-                    <tr>
-                        <td>Oct 3, 4:45 PM</td>
-                        <td><i class="fas fa-book-medical text-info"></i> New Inventory</td>
-                        <td>10 copies of <strong>“The Silent Patient”</strong> added.</td>
-                    </tr>
-                    <tr>
-                        <td>Oct 3, 2:10 PM</td>
-                        <td><i class="fas fa-user-edit text-secondary"></i> Admin Update</td>
-                        <td>Record updated for <strong>Ruel Cliant Parsan</strong>.</td>
-                    </tr>
+                    {{-- FIXED: Loop through recentActivities passed from the controller --}}
+                    @forelse($recentActivities as $activity)
+                        @php
+                            // Mapping logic for icons and colors based on activity type
+                            $activityMap = match($activity->activity_type) {
+                                'book_borrowed'     => ['icon' => 'book-reader', 'color' => 'primary'],
+                                'book_returned'     => ['icon' => 'undo-alt', 'color' => 'success'],
+                                'fine_settled'      => ['icon' => 'wallet', 'color' => 'warning'],
+                                'new_inventory'     => ['icon' => 'book-medical', 'color' => 'info'],
+                                'user_update'       => ['icon' => 'user-edit', 'color' => 'secondary'],
+                                'reservation_approved' => ['icon' => 'check-circle', 'color' => 'success'],
+                                'reservation_pending'  => ['icon' => 'clock', 'color' => 'info'],
+                                default             => ['icon' => 'info-circle', 'color' => 'muted'],
+                            };
+                        @endphp
+                        <tr>
+                            <td>{{ \Carbon\Carbon::parse($activity->created_at)->format('M d, H:i A') }}</td>
+                            <td>
+                                <i class="fas fa-{{ $activityMap['icon'] }} text-{{ $activityMap['color'] }}"></i> 
+                                {{ ucfirst(str_replace('_', ' ', $activity->activity_type)) }}
+                            </td>
+                            <td>
+                                {{ $activity->details }}
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center text-muted">No recent transactions found.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

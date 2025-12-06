@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Student;
+namespace App\Http\Controllers\Faculty;
 
 use App\Http\Controllers\Controller;
 use App\Models\Book;
@@ -12,7 +12,8 @@ use Illuminate\Validation\Rule;
 
 /**
  * BookController
- * * Handles all book-related operations for students including:
+ * 
+ * Handles all book-related operations for faculty including:
  * - Browsing books (popular and all books)
  * - Viewing book details
  * - Reserving books with loan duration selection
@@ -22,49 +23,42 @@ use Illuminate\Validation\Rule;
 class BookController extends Controller
 {
     /**
-     * Display popular books and ebooks on the student dashboard.
-     * * Fetches the 4 most recent physical books and 4 most recent ebooks.
-     * Checks if the authenticated user has any active reservation for the displayed books.
-     * * @return \Illuminate\View\View
+     * Display popular books on faculty dashboard
+     * Shows 6 most recent books with reservation status
+     * 
+     * @return \Illuminate\View\View
      */
     public function index()
     {
-        // --- 1. Fetch data: Limit to 4 items for the dashboard view ---
+        // Get most popular/recent books (limit to 6 for display)
+        $popularBooks = Book::latest()->take(6)->get();
         
-        // Fetch the 4 most recently added physical books.
-        $popularBooks = Book::latest()->take(4)->get();
-        
-        // Fetch the 4 most recently added digital books (ebooks).
-        $popularEbooks = Ebook::latest()->take(4)->get();
-        
-        // --- 2. Check for existing active reservations by the user ---
-        
-        // Retrieve IDs of books the user currently has reserved (pending, approved, or picked up).
+        // Check which books the user already has reservations for
         $userReservations = BookReservation::where('user_id', Auth::id())
             ->whereIn('status', ['pending', 'approved', 'picked_up'])
             ->pluck('book_id')
             ->toArray();
         
-        // --- 3. Augment book data with reservation status flag ---
-        
-        // Add a boolean flag to each physical book indicating if the user has an active reservation.
+        // Add hasReservation flag to each book
         $popularBooks = $popularBooks->map(function($book) use ($userReservations) {
             $book->hasReservation = in_array($book->id, $userReservations);
             return $book;
         });
         
-        // --- 4. Return the view with the prepared data ---
-
-        return view('student.books', [
+        // Get most popular/recent ebooks (limit to 6 for display)
+        $popularEbooks = Ebook::latest()->take(6)->get();
+        
+        return view('faculty.books', [
             'popularBooks' => $popularBooks,
             'popularEbooks' => $popularEbooks,
         ]);
     }
 
     /**
-     * Display all books organized by category.
-     * Includes reservation status check for each book.
-     * * @return \Illuminate\View\View
+     * Display all books organized by category
+     * Includes reservation status check for each book
+     * 
+     * @return \Illuminate\View\View
      */
     public function allBooks()
     {
@@ -92,16 +86,17 @@ class BookController extends Controller
 
         $booksByCategory = $books->groupBy('category');
 
-        return view('student.all_books', [
+        return view('faculty.all_books', [
             'categories' => $categories,
             'booksByCategory' => $booksByCategory,
         ]);
     }
 
     /**
-     * Check if user already has an active reservation for a book.
-     * Used by AJAX calls to prevent duplicate reservations.
-     * * @param int $id Book ID
+     * Check if user already has an active reservation for a book
+     * Used by AJAX calls to prevent duplicate reservations
+     * 
+     * @param int $id Book ID
      * @return \Illuminate\Http\JsonResponse
      */
     public function checkReservation($id)
@@ -132,9 +127,10 @@ class BookController extends Controller
     }
 
     /**
-     * Display detailed information about a specific book.
-     * Includes reservation status and reading list status.
-     * * @param int $id Book ID
+     * Display detailed information about a specific book
+     * Includes reservation status and reading list status
+     * 
+     * @param int $id Book ID
      * @return \Illuminate\View\View
      */
     public function show($id)
@@ -145,18 +141,20 @@ class BookController extends Controller
             ->whereIn('status', ['pending', 'approved', 'picked_up'])
             ->exists();
         
-        return view('student.book_details', compact('book', 'hasReservation'));
+        return view('faculty.book_details', compact('book', 'hasReservation'));
     }
 
     /**
-     * Create a new book reservation request.
-     * * Process:
-     * 1. Validate user doesn't have existing reservation.
-     * 2. Check book availability.
-     * 3. Validate loan duration (max 30 days or 72 hours for students).
-     * 4. Create reservation with status 'pending'.
-     * 5. Redirect to borrowed books page.
-     * * @param \Illuminate\Http\Request $request
+     * Create a new book reservation request
+     * 
+     * Process:
+     * 1. Validate user doesn't have existing reservation
+     * 2. Check book availability
+     * 3. Validate loan duration (max 30 days or 72 hours for faculty)
+     * 4. Create reservation with status 'pending'
+     * 5. Redirect to borrowed books page
+     * 
+     * @param \Illuminate\Http\Request $request
      * @param int $id Book ID
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -203,8 +201,8 @@ class BookController extends Controller
             'loan_duration_unit' => ['required', Rule::in(['day', 'hour'])],
         ]);
 
-        // STEP 4: Enforce maximum loan duration limits for students
-        // Students: max 30 days or 72 hours
+        // STEP 4: Enforce maximum loan duration limits for faculty
+        // faculty: max 30 days or 72 hours
         $maxAllowed = $validated['loan_duration_unit'] === 'hour' ? 72 : 30;
 
         if ($validated['loan_duration_value'] > $maxAllowed) {
@@ -235,7 +233,7 @@ class BookController extends Controller
                 'status' => $reservation->status
             ]);
             
-            return redirect()->route('student.borrowed')->with('success', 'Book reservation requested successfully! You can view it in "My Book Requests" below.');
+            return redirect()->route('faculty.borrowed')->with('success', 'Book reservation requested successfully! You can view it in "My Book Requests" below.');
         } catch (\Exception $e) {
             \Log::error('Failed to create reservation', [
                 'error' => $e->getMessage(),
@@ -248,11 +246,12 @@ class BookController extends Controller
     }
 
     /**
-     * Display student's borrowed books and pending requests.
+     * Display faculty's borrowed books and pending requests
      * Shows two tables:
-     * 1. Recent Borrowed - books that were picked up or returned (historical records).
-     * 2. My Book Requests - pending, approved, or currently borrowed books (active statuses).
-     * * @return \Illuminate\View\View
+     * 1. Recent Borrowed - books that were picked up or returned
+     * 2. My Book Requests - pending, approved, or currently borrowed books
+     * 
+     * @return \Illuminate\View\View
      */
     public function borrowedBooks()
     {
@@ -293,7 +292,7 @@ class BookController extends Controller
             ->where('status', 'approved')
             ->count();
         
-        return view('student.borrowed_books', [
+        return view('faculty.borrowed_books', [
             'borrowedBooks' => $borrowedBooks,
             'bookRequests' => $bookRequests,
             'borrowedBooksCount' => $borrowedBooksCount,
@@ -304,9 +303,10 @@ class BookController extends Controller
     }
 
     /**
-     * Cancel a pending or approved book reservation.
-     * Only allows cancellation if status is 'pending' or 'approved' and belongs to the user.
-     * * @param int $id Reservation ID
+     * Cancel a pending or approved book reservation
+     * Only allows cancellation if status is 'pending' or 'approved'
+     * 
+     * @param int $id Reservation ID
      * @return \Illuminate\Http\RedirectResponse
      */
     public function cancelRequest($id)

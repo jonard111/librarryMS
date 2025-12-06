@@ -65,7 +65,6 @@
         </div>
     </div>
 
-    <!-- Notifications Section -->
     <div class="notifications-section">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mb-0"><i class="fas fa-bell me-2"></i>Notifications</h3>
@@ -75,9 +74,17 @@
             <div class="list-group list-group-flush">
                 @forelse($notifications ?? collect() as $notification)
                     @php
-                        $postedBy = $notification->creator
-                            ? $notification->creator->first_name . ' ' . $notification->creator->last_name
-                            : 'System';
+                        // Determine source and creator for display
+                        $isAnnouncement = ($notification->source ?? 'announcement') === 'announcement';
+
+                        if ($isAnnouncement) {
+                            $postedBy = $notification->creator
+                                ? $notification->creator->first_name . ' ' . $notification->creator->last_name
+                                : 'System';
+                        } else {
+                            $postedBy = 'System/Library';
+                        }
+                        
                         $dateLabel = optional($notification->publish_at)->diffForHumans() ?? 'Just now';
                         
                         // Type badge colors and labels
@@ -87,8 +94,8 @@
                             'reminder' => ['color' => 'warning', 'label' => 'Reminder', 'icon' => 'bell'],
                             'alert' => ['color' => 'warning', 'label' => 'Alert', 'icon' => 'exclamation-circle'],
                             'book_update' => ['color' => 'info', 'label' => 'Book Update', 'icon' => 'book'],
-                            'reservation' => ['color' => 'success', 'label' => 'Reservation', 'icon' => 'bookmark'],
-                            'overdue' => ['color' => 'danger', 'label' => 'Overdue', 'icon' => 'clock'],
+                            'reservation' => ['color' => 'success', 'label' => 'Ready for Pickup', 'icon' => 'bookmark'],
+                            'overdue' => ['color' => 'danger', 'label' => 'Overdue Notice', 'icon' => 'clock'],
                             default => ['color' => 'secondary', 'label' => 'Notification', 'icon' => 'bell']
                         };
                     @endphp
@@ -109,6 +116,7 @@
                                 </span>
                             </div>
                         </div>
+                        {{-- Use the custom notification ID for the modal target --}}
                         <button class="btn btn-sm btn-outline-secondary flex-shrink-0 ms-2" 
                                 data-bs-toggle="modal" 
                                 data-bs-target="#notificationModal{{ $notification->id }}">
@@ -125,15 +133,25 @@
     </div>
 </div>
 
-<!-- Notification Details Modals -->
 @foreach($notifications ?? collect() as $notification)
     @php
-        $postedBy = $notification->creator
-            ? $notification->creator->first_name . ' ' . $notification->creator->last_name
-            : 'System';
+        $isAnnouncement = ($notification->source ?? 'announcement') === 'announcement';
+
+        // Determine source and creator for display
+        if ($isAnnouncement) {
+            $postedBy = $notification->creator
+                ? $notification->creator->first_name . ' ' . $notification->creator->last_name
+                : 'System';
+            $audience = $notification->audience ? implode(', ', array_map('ucfirst', $notification->audience)) : 'All Users';
+            $expiresAt = $notification->expires_at ?? null;
+        } else {
+            $postedBy = 'System/Library';
+            $audience = 'You (Individual Alert)';
+            $expiresAt = null;
+        }
+        
         $publishDate = optional($notification->publish_at)->format('M d, Y');
         $publishTime = optional($notification->publish_at)->format('h:i A');
-        $audience = $notification->audience ? implode(', ', array_map('ucfirst', $notification->audience)) : 'All Users';
         
         $typeInfo = match($notification->type ?? 'announcement') {
             'announcement' => ['color' => 'primary', 'label' => 'Announcement', 'icon' => 'bullhorn'],
@@ -141,8 +159,8 @@
             'reminder' => ['color' => 'warning', 'label' => 'Reminder', 'icon' => 'bell'],
             'alert' => ['color' => 'warning', 'label' => 'Alert', 'icon' => 'exclamation-circle'],
             'book_update' => ['color' => 'info', 'label' => 'Book Update', 'icon' => 'book'],
-            'reservation' => ['color' => 'success', 'label' => 'Reservation', 'icon' => 'bookmark'],
-            'overdue' => ['color' => 'danger', 'label' => 'Overdue', 'icon' => 'clock'],
+            'reservation' => ['color' => 'success', 'label' => 'Ready for Pickup', 'icon' => 'bookmark'],
+            'overdue' => ['color' => 'danger', 'label' => 'Overdue Notice', 'icon' => 'clock'],
             default => ['color' => 'secondary', 'label' => 'Notification', 'icon' => 'bell']
         };
     @endphp
@@ -160,9 +178,10 @@
                         <span class="badge bg-{{ $typeInfo['color'] }} me-2">
                             <i class="fas fa-{{ $typeInfo['icon'] }} me-1"></i>{{ $typeInfo['label'] }}
                         </span>
-                        @if($notification->expires_at)
+                        {{-- Only display expiration for Announcements --}}
+                        @if($isAnnouncement && $expiresAt)
                             <span class="badge bg-secondary">
-                                <i class="fas fa-calendar-times me-1"></i>Expires: {{ $notification->expires_at->format('M d, Y') }}
+                                <i class="fas fa-calendar-times me-1"></i>Expires: {{ $expiresAt->format('M d, Y') }}
                             </span>
                         @endif
                     </div>
@@ -184,7 +203,13 @@
                     <div class="notification-content">
                         <h6 class="mb-2">Details:</h6>
                         <div class="text-muted">
-                            {!! nl2br(e($notification->body)) !!}
+                            {{-- Use html_entity_decode and nl2br only if the body is from a database (Announcement) --}}
+                            @if($isAnnouncement)
+                                {!! nl2br(e($notification->body)) !!}
+                            @else
+                                {{-- Simple text for custom alerts --}}
+                                {!! nl2br(e($notification->body)) !!}
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -205,16 +230,15 @@
         if (searchNotificationInput) {
             searchNotificationInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase().trim();
-                const notificationCards = document.querySelectorAll('.card, .list-group-item');
+                const notificationCards = document.querySelectorAll('.list-group-item'); // Target list items directly
                 
                 notificationCards.forEach(card => {
-                    const title = card.querySelector('h5, .card-title, strong')?.textContent.toLowerCase() || '';
+                    // Check text content of the list item
                     const content = card.textContent.toLowerCase();
                     
-                    const matches = title.includes(searchTerm) || 
-                                   content.includes(searchTerm);
+                    const matches = content.includes(searchTerm);
                     
-                    card.style.display = matches ? '' : 'none';
+                    card.style.display = matches ? 'flex' : 'none'; // Use 'flex' since list-group-item is a flex container
                 });
             });
         }

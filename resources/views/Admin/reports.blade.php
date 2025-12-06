@@ -196,7 +196,7 @@
 
                     </tbody>
 
-                </table>
+                </table>  
             </div>
 
         </div>
@@ -207,7 +207,7 @@
 <!-- Generate Report Modal - Vue Component -->
 <report-modal
     generate-url="{{ url('/admin/reports/generate') }}"
-    modal-id="generateReportModal"
+    modal-id="generate-report-modal"
 ></report-modal>
 
 <!-- Report Results Modal -->

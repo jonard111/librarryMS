@@ -83,7 +83,7 @@
                 @forelse($popularBooks ?? collect() as $book)
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                         <div class="card card-wrapper position-relative dashboard-card shadow">
-                            <span class="badge-status badge-completed">Copies: {{ $book->copies }}</span>
+                            <span class="badge-status badge-completed text-white">Copies: {{ $book->copies }}</span>
                             <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
                                 <img src="{{ $book->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
                                      class="card-img-top" 
@@ -133,7 +133,7 @@
                 @forelse($popularEbooks ?? collect() as $ebook)
                     <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
                         <div class="card card-wrapper position-relative dashboard-card shadow">
-                            <span class="badge-status badge-completed">Views: {{ $ebook->views }}</span>
+                            <span class="badge-status badge-completed text-white">Views: {{ $ebook->views }}</span>
                             <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
                                 <img src="{{ $ebook->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
                                      class="card-img-top" 

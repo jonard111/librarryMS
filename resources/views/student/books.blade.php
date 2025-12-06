@@ -1,4 +1,3 @@
-<!-- resources/views/student/books.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,16 +81,17 @@
         </div>
     @endif
 
-    <!-- Most Popular Books Section -->
     <section>
         <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
             <h5 class="mb-2 mb-md-0">Most Popular Books</h5>
             <a href="{{ route('student.books.all') }}" class="btn btn-outline-primary btn-sm">View All</a>
         </div>
 
-        <div class="row row-cols-2 row-cols-md-6 g-3">
+        {{-- **CHANGE HERE: Adjusted row-cols to display max 4 items** --}}
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 g-3">
             @forelse($popularBooks ?? collect() as $book)
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                {{-- **CHANGE HERE: Simplified col classes for consistency with 4 per row** --}}
+                <div class="col mb-4">
                     <div class="card card-wrapper position-relative dashboard-card shadow">
                         <span class="badge-status badge-completed">Copies: {{ $book->copies }}</span>
                         <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
@@ -129,23 +129,24 @@
             @empty
                 <div class="col-12">
                     <div class="alert alert-light border text-center">
-                        <i class="fas fa-info-circle me-2"></i>No books available at the moment.
+                        <i class="fas fa-info-circle me-2"></i>No popular books available at the moment.
                     </div>
                 </div>
             @endforelse
         </div>
     </section>
 
-    <!-- Most Popular E-Books Section -->
     <section>
         <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
             <h5 class="mb-2 mb-md-0">Most Popular E-Books</h5>
             <a href="{{ route('student.ebooks.all') }}" class="btn btn-outline-primary btn-sm">View All</a>
         </div>
 
-        <div class="row row-cols-2 row-cols-md-6 g-3">
+        {{-- **CHANGE HERE: Adjusted row-cols to display max 4 items** --}}
+        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-4 g-3">
             @forelse($popularEbooks ?? collect() as $ebook)
-                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                {{-- **CHANGE HERE: Simplified col classes for consistency with 4 per row** --}}
+                <div class="col mb-4">
                     <div class="card card-wrapper position-relative dashboard-card shadow">
                         <span class="badge-status badge-completed">NEW</span>
                         <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
@@ -176,7 +177,7 @@
             @empty
                 <div class="col-12">
                     <div class="alert alert-light border text-center">
-                        <i class="fas fa-info-circle me-2"></i>No e-books available at the moment.
+                        <i class="fas fa-info-circle me-2"></i>No popular e-books available at the moment.
                     </div>
                 </div>
             @endforelse
@@ -184,9 +185,7 @@
     </section>
 </div>
 
-@include('student.partials.profile-modal')
 
-<!-- Reserve Book Modal -->
 <div class="modal fade" id="reserveBookModal" tabindex="-1" aria-labelledby="reserveBookModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -269,7 +268,6 @@
     </div>
 </div>
 
-<!-- Read Ebook Modal -->
 <div class="modal fade" id="readEbookModal" tabindex="-1" aria-labelledby="readEbookModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
@@ -518,4 +516,3 @@
 @include('student.partials.profile-modal')
 </body>
 </html>
-

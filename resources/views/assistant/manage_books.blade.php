@@ -76,6 +76,7 @@
           <h5 class="mb-2 mb-md-0">Most Popular Books</h5>
           <a href="{{ route('assistant.allBooks') }}" class="btn btn-outline-primary btn-sm">View All</a>
         </div>
+        <hr>
 
         <div class="row row-cols-2 row-cols-md-6 g-3">
           @forelse($popularBooks ?? collect() as $book)
@@ -104,6 +105,7 @@
           <h5 class="mb-2 mb-md-0">Most Popular E-Books</h5>
           <a href="{{ route('assistant.allEbooks') }}" class="btn btn-outline-primary btn-sm">View All</a>
         </div>
+        <hr>
 
         <div class="row row-cols-2 row-cols-md-6 g-3">
           @forelse($popularEbooks ?? collect() as $ebook)

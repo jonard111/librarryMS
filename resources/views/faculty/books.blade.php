@@ -1,172 +1,190 @@
+<!-- resources/views/faculty/books.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Books</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
- <link rel="stylesheet" href="../Css/book.css">
-    {{-- Vite CSS for this page ONLY --}}
+  {{-- Vite CSS for this page ONLY --}}
     @vite(['resources/js/app.js', 'resources/css/book.css', 'resources/css/design.css'])
-    </head>
+
+    {{-- CDN libraries --}}
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
 <body class="bg-light">
 
 <input type="checkbox" id="sidebar-toggle">
 
 <div class="sidebar">
-  <a href="javascript:void(0)" class="profile-info-link" data-bs-toggle="modal" data-bs-target="#facultyProfileModal">
-    <div class="profile-info">
-      <i class="fas fa-user-circle"></i>
-      <div class="profile-text">
-        <h2>{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h2>
-      </div>
-    </div>
-  </a>
-
+    <a href="javascript:void(0)" class="profile-info-link" data-bs-toggle="modal" data-bs-target="#facultyProfileModal">
+        <div class="profile-info">
+            <i class="fas fa-user-circle"></i>
+            <div class="profile-text">
+                <h2>{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h2>
+            </div>
+        </div>
+    </a>
 
     <nav class="nav flex-column text-start">
-      <a href="{{ route('faculty.dashboard') }}" class="nav-link ">
-        <i class="fas fa-chart-bar me-2"></i><span>Dashboard</span> 
-      </a>
-       <a href="{{ route('faculty.borrowedBooks') }}" class="nav-link ">
-         <i class="fas fa-file-alt me-2"></i><span> My Borrowed Books</span>
-     </a>
-      <a href="{{ route('faculty.requestBooks') }}" class="nav-link ">
-        <i class="fas fa-file-alt me-2"></i><span>Request Books</span> 
-      </a>
-      <a href="{{ route('faculty.announcement') }}" class="nav-link ">
-        <i class="fas fa-bullhorn me-2"></i><span>Announcements</span> 
-      </a>
-       <a href="{{ route('faculty.notification') }}" class="nav-link">
-        <i class="fas fa-solid fa-bell me-2"></i><span>Notification</span> 
-      </a>
-       <a href="{{ route('faculty.books') }}" class="nav-link active">
-        <i class="fas fa-book-open me-2"></i><span>Books</span> 
-      </a>
+        <a href="{{ route('faculty.dashboard') }}" class="nav-link {{ request()->routeIs('faculty.dashboard') ? 'active' : '' }}">
+            <i class="fas fa-chart-bar me-2"></i><span>Dashboard</span>
+        </a>
+        <a href="{{ route('faculty.borrowed') }}" class="nav-link {{ request()->routeIs('faculty.borrowed') ? 'active' : '' }}">
+            <i class="fas fa-file-alt me-2"></i><span>My Borrowed Books</span>
+        </a>
+        <a href="{{ route('faculty.notifications') }}" class="nav-link {{ request()->routeIs('faculty.notifications') ? 'active' : '' }}">
+            <i class="fas fa-bell me-2"></i><span>Notification</span>
+        </a>
+        <a href="{{ route('faculty.books') }}" class="nav-link {{ request()->routeIs('faculty.books') ? 'active' : '' }}">
+            <i class="fas fa-book-open me-2"></i><span>Books</span>
+        </a>
     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link fw-bold logoutLink">
     <i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span>
     </a>
     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
     @csrf
     </form>
-  </nav>
+    </nav>
 </div>
 
- <div class="sidebar-overlay"></div>
+<div class="sidebar-overlay"></div>
 
 <div class="content flex-grow-1">
-     <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-
-
-      <div class="d-flex align-items-center gap-2">
-        <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
-        <h3 class="mb-0 fw-semibold text-success">Books</h3>
-      </div>
-
-   <div class="d-flex align-items-center gap-2">
-        <div class="text-end">
-          <span class="fw-bold text-success d-block">Library MS</span>
-          <small class="text-muted">Management System</small>
+    <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+        <div class="d-flex align-items-center gap-2">
+            <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
+            <h3 class="mb-0 fw-semibold text-success">Books</h3>
         </div>
-        <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" style="height:50px;">
-      </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <div class="text-end">
+                <span class="fw-bold text-success d-block">Library MS</span>
+                <small class="text-muted">Management System</small>
+            </div>
+            <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" alt="DNSC Logo" style="height:50px;">
+        </div>
     </div>
 
-    
-      <section>
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <!-- Most Popular Books Section -->
+    <section>
         <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
-          <h5 class="mb-2 mb-md-0">Most Popular Books</h5>
-           <a href="{{ url('faculty/all_books') }}" class="btn btn-outline-primary btn-sm">View All</a>
+            <h5 class="mb-2 mb-md-0">Most Popular Books</h5>
+            <a href="{{ route('faculty.books.all') }}" class="btn btn-outline-primary btn-sm">View All</a>
         </div>
 
         <div class="row row-cols-2 row-cols-md-6 g-3">
-          @forelse($popularBooks ?? collect() as $book)
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
-              <div class="card card-wrapper position-relative dashboard-card shadow">
-                <span class="badge-status badge-completed">Copies: {{ $book->copies }}</span>
-                <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
-                    <img src="{{ $book->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
-                         class="card-img-top" 
-                         alt="{{ $book->title }}"
-                         style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                         onerror="this.onerror=null; this.src='{{ Vite::asset('resources/images/bookcover3.jpg') }}';" />
+            @forelse($popularBooks ?? collect() as $book)
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <div class="card card-wrapper position-relative dashboard-card shadow">
+                        <span class="badge-status badge-completed text-white">Copies: {{ $book->copies }}</span>
+                        <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
+                            <img src="{{ $book->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
+                                 class="card-img-top" 
+                                 alt="{{ $book->title }}"
+                                 style="width: 100%; height: 100%; object-fit: cover; display: block;" 
+                                 onerror="this.onerror=null; this.src='{{ Vite::asset('resources/images/bookcover3.jpg') }}';" />
+                        </div>
+                        <div class="card-body p-2">
+                            <h5 class="card-title mb-1 text-truncate">{{ $book->title }}</h5>
+                            <small class="card-subtitle text-muted">{{ $book->author }}</small>
+                        </div>
+                        @if(isset($book->hasReservation) && $book->hasReservation)
+                            <button class="btn btn-outline-secondary btn-sm m-2" disabled title="You already have a reservation for this book">
+                                <i class="fas fa-check-circle me-1"></i> Already Reserved
+                            </button>
+                        @else
+                            <button class="btn btn-outline-success btn-sm m-2 reserve-book-btn" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#reserveBookModal"
+                                    data-book-id="{{ $book->id }}"
+                                    data-book-title="{{ $book->title }}"
+                                    data-book-author="{{ $book->author }}"
+                                    data-book-copies="{{ $book->copies }}"
+                                    data-book-cover="{{ $book->coverUrl() ?? '' }}"
+                                    data-book-isbn="{{ $book->isbn ?? '' }}"
+                                    data-book-publisher="{{ $book->publisher ?? '' }}"
+                                    data-book-category="{{ $book->category }}">
+                                Reserve Now
+                            </button>
+                        @endif
+                    </div>
                 </div>
-                <div class="card-body p-2">
-                  <h5 class="card-title mb-1 text-truncate">{{ $book->title }}</h5>
-                  <small class="card-subtitle text-muted">{{ $book->author }}</small>
+            @empty
+                <div class="col-12">
+                    <div class="alert alert-light border text-center">
+                        <i class="fas fa-info-circle me-2"></i>No books available at the moment.
+                    </div>
                 </div>
-                <button class="btn btn-outline-success btn-sm m-2 reserve-book-btn" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#reserveBookModal"
-                        data-book-id="{{ $book->id }}"
-                        data-book-title="{{ $book->title }}"
-                        data-book-author="{{ $book->author }}"
-                        data-book-copies="{{ $book->copies }}"
-                        data-book-cover="{{ $book->coverUrl() ?? '' }}"
-                        data-book-isbn="{{ $book->isbn ?? '' }}"
-                        data-book-publisher="{{ $book->publisher ?? '' }}"
-                        data-book-category="{{ $book->category }}">
-                    Reserve Now
-                </button>
-              </div>
-            </div>
-          @empty
-            <div class="col-12">
-              <div class="alert alert-light border text-center">
-                <i class="fas fa-info-circle me-2"></i>No books available at the moment.
-              </div>
-            </div>
-          @endforelse
+            @endforelse
         </div>
-      </section>
-       <section>
+    </section>
+
+    <!-- Most Popular E-Books Section -->
+    <section>
         <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
-          <h5 class="mb-2 mb-md-0">Most Popular E-Books</h5>
-           <a href="{{ url('faculty/all_ebooks') }}" class="btn btn-outline-primary btn-sm">View All</a>
+            <h5 class="mb-2 mb-md-0">Most Popular E-Books</h5>
+            <a href="{{ route('faculty.ebooks.all') }}" class="btn btn-outline-primary btn-sm">View All</a>
         </div>
 
         <div class="row row-cols-2 row-cols-md-6 g-3">
-          @forelse($popularEbooks ?? collect() as $ebook)
-            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
-              <div class="card card-wrapper position-relative dashboard-card shadow">
-                <span class="badge-status badge-completed">NEW</span>
-                <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
-                    <img src="{{ $ebook->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
-                         class="card-img-top" 
-                         alt="{{ $ebook->title }}"
-                         style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                         onerror="this.onerror=null; this.src='{{ Vite::asset('resources/images/bookcover3.jpg') }}';" />
+            @forelse($popularEbooks ?? collect() as $ebook)
+                <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                    <div class="card card-wrapper position-relative dashboard-card shadow">
+                       <span class="badge-status badge-completed text-white">Views: {{ $ebook->views }}</span>
+                        <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
+                            <img src="{{ $ebook->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
+                                 class="card-img-top" 
+                                 alt="{{ $ebook->title }}"
+                                 style="width: 100%; height: 100%; object-fit: cover; display: block;" 
+                                 onerror="this.onerror=null; this.src='{{ Vite::asset('resources/images/bookcover3.jpg') }}';" />
+                        </div>
+                        <div class="card-body p-2">
+                            <h5 class="card-title mb-1 text-truncate">{{ $ebook->title }}</h5>
+                            <small class="card-subtitle text-muted">{{ $ebook->author }}</small>
+                        </div>
+                        <button class="btn btn-outline-success btn-sm m-2 read-ebook-btn" 
+                                data-bs-toggle="modal" 
+                                data-bs-target="#readEbookModal"
+                                data-ebook-id="{{ $ebook->id }}"
+                                data-ebook-title="{{ $ebook->title }}"
+                                data-ebook-author="{{ $ebook->author }}"
+                                data-ebook-cover="{{ $ebook->coverUrl() ?? '' }}"
+                                data-ebook-file="{{ $ebook->fileUrl() ?? '' }}"
+                                data-ebook-category="{{ $ebook->category }}"
+                                data-ebook-views="{{ $ebook->views }}">
+                            Read Now
+                        </button>
+                    </div>
                 </div>
-                <div class="card-body p-2">
-                  <h5 class="card-title mb-1 text-truncate">{{ $ebook->title }}</h5>
-                  <small class="card-subtitle text-muted">{{ $ebook->author }}</small>
+            @empty
+                <div class="col-12">
+                    <div class="alert alert-light border text-center">
+                        <i class="fas fa-info-circle me-2"></i>No e-books available at the moment.
+                    </div>
                 </div>
-                <button class="btn btn-outline-success btn-sm m-2 read-ebook-btn" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#readEbookModal"
-                        data-ebook-id="{{ $ebook->id }}"
-                        data-ebook-title="{{ $ebook->title }}"
-                        data-ebook-author="{{ $ebook->author }}"
-                        data-ebook-cover="{{ $ebook->coverUrl() ?? '' }}"
-                        data-ebook-file="{{ $ebook->fileUrl() ?? '' }}"
-                        data-ebook-category="{{ $ebook->category }}"
-                        data-ebook-views="{{ $ebook->views }}">
-                    Read Now
-                </button>
-              </div>
-            </div>
-          @empty
-            <div class="col-12">
-              <div class="alert alert-light border text-center">
-                <i class="fas fa-info-circle me-2"></i>No e-books available at the moment.
-              </div>
-            </div>
-          @endforelse
+            @endforelse
         </div>
-      </section>
-    </div> 
-  </div>
+    </section>
+</div>
+
+@include('faculty.partials.profile-modal')
 
 <!-- Reserve Book Modal -->
 <div class="modal fade" id="reserveBookModal" tabindex="-1" aria-labelledby="reserveBookModalLabel" aria-hidden="true">
@@ -178,7 +196,7 @@
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="reserveBookForm" action="" method="POST">
+            <form id="reserveBookForm" action="" method="POST" onsubmit="return validateReservationForm(event)">
                 @csrf
                 <div class="modal-body">
                     <div class="row">
@@ -207,6 +225,35 @@
                         </div>
                     </div>
                     <hr>
+                    <div class="mb-3">
+                        <label for="loanDurationValue" class="form-label">How long would you like to borrow this book?</label>
+                        <div class="input-group">
+                            <input 
+                                type="number" 
+                                class="form-control @error('loan_duration_value') is-invalid @enderror" 
+                                id="loanDurationValue" 
+                                name="loan_duration_value" 
+                                value="{{ old('loan_duration_value', 7) }}" 
+                                min="1" 
+                                required>
+                            <select 
+                                class="form-select @error('loan_duration_unit') is-invalid @enderror" 
+                                name="loan_duration_unit" 
+                                required>
+                                <option value="day" @selected(old('loan_duration_unit', 'day') === 'day')>Day(s)</option>
+                                <option value="hour" @selected(old('loan_duration_unit') === 'hour')>Hour(s)</option>
+                            </select>
+                        </div>
+                        <div class="form-text">
+                            faculty may borrow up to 30 days or 72 hours at a time.
+                        </div>
+                        @error('loan_duration_value')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                        @error('loan_duration_unit')
+                            <div class="invalid-feedback d-block">{{ $message }}</div>
+                        @enderror
+                    </div>
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle me-2"></i>By clicking "Confirm Reservation", you are requesting to reserve this book. You will be notified once your reservation is approved.
                     </div>
@@ -269,9 +316,61 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+    // Validate form before submission
+    function validateReservationForm(event) {
+        const form = document.getElementById('reserveBookForm');
+        const action = form.getAttribute('action') || form.action;
+        const durationValue = document.getElementById('loanDurationValue').value;
+        const durationUnit = document.querySelector('[name="loan_duration_unit"]').value;
+        
+        console.log('Form validation:', {
+            action: action,
+            durationValue: durationValue,
+            durationUnit: durationUnit
+        });
+        
+        // Check if form action is set
+        if (!action || action === '' || action === window.location.href) {
+            event.preventDefault();
+            alert('Error: Form action not set. Please close the modal and try again.');
+            console.error('Form action error:', action);
+            return false;
+        }
+        
+        // Validate duration
+        if (!durationValue || durationValue < 1) {
+            event.preventDefault();
+            alert('Please enter a valid loan duration.');
+            return false;
+        }
+        
+        const maxAllowed = durationUnit === 'hour' ? 72 : 30;
+        if (parseInt(durationValue) > maxAllowed) {
+            event.preventDefault();
+            alert(durationUnit === 'hour' 
+                ? 'Hourly loans are limited to 72 hours.' 
+                : 'Daily loans are limited to 30 days.');
+            return false;
+        }
+        
+        // Show confirmation dialog
+        const bookTitle = document.getElementById('reserveBookTitle').textContent;
+        const confirmMessage = `Are you sure you want to reserve "${bookTitle}" for ${durationValue} ${durationUnit === 'hour' ? 'hour(s)' : 'day(s)'}?`;
+        
+        if (!confirm(confirmMessage)) {
+            event.preventDefault();
+            return false;
+        }
+        
+        console.log('Form is valid, submitting to:', action);
+        return true;
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         // Reserve Book Modal
         const reserveButtons = document.querySelectorAll('.reserve-book-btn');
+        const reserveForm = document.getElementById('reserveBookForm');
+        
         reserveButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const bookId = this.getAttribute('data-book-id');
@@ -283,28 +382,81 @@
                 const publisher = this.getAttribute('data-book-publisher');
                 const category = this.getAttribute('data-book-category');
                 
-                document.getElementById('reserveBookForm').action = '{{ route("faculty.books.reserve", ":id") }}'.replace(':id', bookId);
-                document.getElementById('reserveBookTitle').textContent = title;
-                document.getElementById('reserveBookAuthor').textContent = author;
-                document.getElementById('reserveBookCopies').textContent = copies;
-                document.getElementById('reserveBookCategory').textContent = category.charAt(0).toUpperCase() + category.slice(1);
-                document.getElementById('reserveBookCover').src = cover;
-                
-                if (isbn) {
-                    document.getElementById('reserveBookIsbn').textContent = isbn;
-                    document.getElementById('reserveBookIsbnContainer').style.display = 'block';
-                } else {
-                    document.getElementById('reserveBookIsbnContainer').style.display = 'none';
-                }
-                
-                if (publisher) {
-                    document.getElementById('reserveBookPublisher').textContent = publisher;
-                    document.getElementById('reserveBookPublisherContainer').style.display = 'block';
-                } else {
-                    document.getElementById('reserveBookPublisherContainer').style.display = 'none';
-                }
+                // Check if user already has a reservation for this book
+                fetch(`/faculty/books/${bookId}/check-reservation`, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.hasReservation) {
+                        alert(data.message || 'You already have a reservation for this book. Please check "My Borrowed Books" for details.');
+                        // Close modal if open
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('reserveBookModal'));
+                        if (modal) {
+                            modal.hide();
+                        }
+                        return;
+                    }
+                    
+                    // Set form action
+                    const actionUrl = '{{ route("faculty.books.reserve", ":id") }}'.replace(':id', bookId);
+                    reserveForm.setAttribute('action', actionUrl);
+                    
+                    // Populate modal fields
+                    document.getElementById('reserveBookTitle').textContent = title;
+                    document.getElementById('reserveBookAuthor').textContent = author;
+                    document.getElementById('reserveBookCopies').textContent = copies;
+                    document.getElementById('reserveBookCategory').textContent = category.charAt(0).toUpperCase() + category.slice(1);
+                    document.getElementById('reserveBookCover').src = cover;
+                    
+                    // Reset form fields
+                    document.getElementById('loanDurationValue').value = 7;
+                    document.querySelector('[name="loan_duration_unit"]').value = 'day';
+                    
+                    // Show/hide optional fields
+                    if (isbn) {
+                        document.getElementById('reserveBookIsbn').textContent = isbn;
+                        document.getElementById('reserveBookIsbnContainer').style.display = 'block';
+                    } else {
+                        document.getElementById('reserveBookIsbnContainer').style.display = 'none';
+                    }
+                    
+                    if (publisher) {
+                        document.getElementById('reserveBookPublisher').textContent = publisher;
+                        document.getElementById('reserveBookPublisherContainer').style.display = 'block';
+                    } else {
+                        document.getElementById('reserveBookPublisherContainer').style.display = 'none';
+                    }
+                    
+                    console.log('Modal opened for book:', { bookId, title, actionUrl });
+                })
+                .catch(error => {
+                    console.error('Error checking reservation:', error);
+                    // Continue with modal opening even if check fails
+                    const actionUrl = '{{ route("faculty.books.reserve", ":id") }}'.replace(':id', bookId);
+                    reserveForm.setAttribute('action', actionUrl);
+                });
             });
         });
+        
+        // Add direct submit handler
+        if (reserveForm) {
+            reserveForm.addEventListener('submit', function(e) {
+                console.log('Form submit event triggered');
+                const action = this.action;
+                if (!action || action === '' || action === window.location.href) {
+                    e.preventDefault();
+                    alert('Error: Cannot submit form. Form action is not set correctly.');
+                    console.error('Form action error:', action);
+                    return false;
+                }
+                console.log('Form submitting to:', action);
+            });
+        }
 
         // Read Ebook Modal
         const readButtons = document.querySelectorAll('.read-ebook-btn');
@@ -364,6 +516,6 @@
     });
 </script>
 @include('faculty.partials.profile-modal')
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
+

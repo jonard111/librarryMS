@@ -174,38 +174,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
-
-    <!-- Quick Stats Row -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-book-reader fa-2x text-primary mb-2"></i>
-                    <h4 class="mb-1">{{ $totalBooksRead ?? 0 }}</h4>
-                    <small class="text-muted">Total Books Read</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-bookmark fa-2x text-warning mb-2"></i>
-                    <h4 class="mb-1">{{ $readingList->count() ?? 0 }}</h4>
-                    <small class="text-muted">In Reading List</small>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center">
-                    <i class="fas fa-exclamation-circle fa-2x text-danger mb-2"></i>
-                    <h4 class="mb-1">{{ isset($overdueBooks) ? $overdueBooks->count() : 0 }}</h4>
-                    <small class="text-muted">Overdue Books</small>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    
     <!-- Recent Announcements -->
     @if(isset($recentAnnouncements) && $recentAnnouncements->count() > 0)
         <section class="mb-4">
@@ -233,59 +202,6 @@
             </div>
         </section>
     @endif
-
-    <!-- My Reading List -->
-    <section>
-      <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
-        <h3 class="mb-2 mb-md-0"><i class="fas fa-bookmark me-2"></i>My Reading List</h3>
-        @if($readingList->count() > 0)
-          <a href="{{ route('student.reading-list') }}" class="btn btn-outline-primary btn-sm">View All</a>
-        @endif
-      </div>
-      <div class="row row-cols-2 row-cols-md-6 g-3">
-        @forelse($readingList as $readingListItem)
-          @if($readingListItem->book)
-            <div class="col-12 col-sm-6 col-md-3 mb-4">
-              <div class="card card-wrapper shadow dashboard-card position-relative">
-                <span class="badge-status badge-completed">Saved</span>
-                <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
-                  <img src="{{ $readingListItem->book->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
-                       class="card-img-top" 
-                       alt="{{ $readingListItem->book->title }}"
-                       style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                       onerror="this.onerror=null; this.src='{{ Vite::asset('resources/images/bookcover3.jpg') }}';" />
-                </div>
-                <div class="card-body p-2">
-                  <h5 class="card-title mb-1 text-truncate">{{ $readingListItem->book->title }}</h5>
-                  <small class="card-subtitle text-muted">{{ $readingListItem->book->author }}</small>
-                </div>
-                <div class="d-flex gap-2 m-2">
-                  <a href="{{ route('student.books.show', $readingListItem->book->id) }}" class="btn btn-outline-primary btn-sm flex-fill">
-                    <i class="fas fa-eye me-1"></i> View
-                  </a>
-                  <form action="{{ route('student.reading-list.remove', $readingListItem->book->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Remove this book from your reading list?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove from reading list">
-                      <i class="fas fa-trash"></i>
-                    </button>
-                  </form>
-                </div>
-              </div>
-            </div>
-          @endif
-        @empty
-          <div class="col-12">
-            <div class="alert alert-light border text-center">
-              <i class="fas fa-bookmark me-2 text-muted"></i>
-              <p class="mb-0">Your reading list is empty. Start adding books you want to read!</p>
-              <a href="{{ route('student.books') }}" class="btn btn-outline-primary btn-sm mt-2">Browse Books</a>
-            </div>
-          </div>
-        @endforelse
-      </div>
-    </section>
-
 </div>
 
 @include('student.partials.profile-modal')

@@ -12,7 +12,6 @@
     
     <input type="checkbox" id="sidebar-toggle">
 
-    <!-- Sidebar -->
     <div class="sidebar">
         <a href="javascript:void(0)" class="profile-info-link" data-bs-toggle="modal" data-bs-target="#headlibrarianProfileModal">
             <div class="profile-info">
@@ -53,10 +52,8 @@
 
     <div class="sidebar-overlay"></div>
 
-    <!-- Main Content -->
     <div class="content flex-grow-1">
 
-        <!-- Top Header -->
         <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
             <div class="d-flex align-items-center gap-2 flex-grow-1 me-3"> 
                 <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
@@ -68,7 +65,7 @@
 
             <div class="d-flex align-items-center gap-2">
                 <div class="d-flex flex-column text-end">
-                    <span class="fw-bold text-success d-block">Library MS</span>
+                    <span class="fw-bold text-primary d-block">Library MS</span>
                     <small class="text-muted" style="font-size:0.85rem;">Management System</small>
                 </div>
                 <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" alt="DNSC Logo" style="height:50px;">
@@ -89,7 +86,6 @@
             </div>
         @endif
 
-        <!-- Dashboard Cards -->
         <div class="row g-4 mb-4">
             <h3 class="mb-0">Manage Reservation & Borrow/Return</h3>
 
@@ -110,9 +106,10 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted small mb-1">Books Borrowed</p>
+                            {{-- Changed text-success to text-primary/text-info for consistency --}}
                             <h3 class="mb-0">{{ $booksBorrowed }}</h3>
                         </div>
-                        <i class="fas fa-book text-success fs-3"></i>
+                        <i class="fas fa-book text-info fs-3"></i> 
                     </div>
                 </div>
             </div>
@@ -134,7 +131,7 @@
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted small mb-1">Overdue Books</p>
-                            <h3 class="mb-0">{{ $overdueBooks }}</h3>
+                            <h3 class="mb-0 text-danger">{{ $overdueBooks }}</h3>
                         </div>
                         <i class="fas fa-exclamation-triangle text-danger fs-3"></i>
                     </div>
@@ -142,7 +139,6 @@
             </div>
         </div>
 
-        <!-- Book Reservations Table -->
         <div class="card shadow-sm card-body mb-4">
             <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
                 <h5 class="card-title mb-0">Book Reservations</h5>
@@ -163,7 +159,7 @@
                             <th>Student Name</th>
                             <th>Book Title</th>
                             <th>Reservation Date</th>
-                            <th>Pickup Deadline</th>
+                            <th>Loan/Due Duration</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -175,19 +171,20 @@
                             <td>{{ $reservation->book->title }}</td>
                             <td>{{ $reservation->reservation_date ? $reservation->reservation_date->format('M d, Y') : 'N/A' }}</td>
                             <td>
-                                @if($reservation->pickup_date)
-                                    {{ $reservation->pickup_date->copy()->addDays(3)->format('M d, Y') }}
+                                {{-- FIXED: Display Loan Duration Label and Due Date if Picked Up --}}
+                                @if($reservation->status === 'picked_up')
+                                    <small class="text-muted">Due:</small> <strong>{{ $reservation->due_date ? $reservation->due_date->format('M d, Y') : 'N/A' }}</strong>
                                 @else
-                                    {{ $reservation->reservation_date ? $reservation->reservation_date->copy()->addDays(3)->format('M d, Y') : 'N/A' }}
+                                    {{ $reservation->loan_duration_label ?? 'N/A' }} 
                                 @endif
                             </td>
                             <td>
                                 @if($reservation->status === 'picked_up')
                                     <span class="badge bg-success"><i class="fas fa-check-circle"></i> Picked Up</span>
                                 @elseif($reservation->status === 'approved')
-                                    <span class="badge bg-info"><i class="fas fa-check"></i> Approved</span>
+                                    <span class="badge bg-primary"><i class="fas fa-check"></i> Approved</span>
                                 @elseif($reservation->status === 'pending')
-                                    <span class="badge bg-warning"><i class="fas fa-hourglass-half"></i> Pending</span>
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half"></i> Pending</span>
                                 @elseif($reservation->status === 'returned')
                                     <span class="badge bg-secondary"><i class="fas fa-undo"></i> Returned</span>
                                 @else
@@ -200,6 +197,7 @@
                                         <form action="{{ route('head.reservation.approveRequest', $reservation->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('PUT')
+                                            {{-- Use btn-primary for primary action (Coastal Blue theme) --}}
                                             <button type="submit" class="btn btn-primary btn-sm" title="Approve Request">
                                                 <i class="fas fa-check"></i> Approve
                                             </button>
@@ -208,18 +206,29 @@
                                         <form action="{{ route('head.reservation.approve', $reservation->id) }}" method="POST" class="d-inline">
                                             @csrf
                                             @method('PUT')
+                                            {{-- Use btn-success for critical step (Pick Up) --}}
                                             <button type="submit" class="btn btn-success btn-sm" title="Mark as Picked Up">
                                                 <i class="fas fa-check-circle"></i> Picked Up
                                             </button>
                                         </form>
                                     @elseif($reservation->status === 'picked_up')
-                                        <button class="btn btn-sm btn-outline-secondary" disabled>
-                                            <i class="fas fa-check"></i> Active
-                                        </button>
+                                        {{-- ADDED: Return button for active loans in this table for completeness --}}
+                                        <form action="{{ route('head.reservation.return', $reservation->id) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="btn btn-info btn-sm" title="Return Book">
+                                                <i class="fas fa-undo-alt"></i> Return
+                                            </button>
+                                        </form>
                                     @endif
-                                    <button class="btn btn-sm btn-outline-danger" title="Delete Reservation" onclick="deleteReservation({{ $reservation->id }})">
-                                        <i class="fas fa-trash-alt"></i> Delete
-                                    </button>
+                                    {{-- Use a form for DELETE for better CSRF protection --}}
+                                    <form action="{{ route('head.reservation.destroy', $reservation->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete reservation ID {{ $reservation->id }}?');" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Reservation">
+                                            <i class="fas fa-trash-alt"></i> Delete
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -235,9 +244,8 @@
             </div>
         </div>
 
-        <!-- Active Borrowers Table -->
         <div class="card shadow-sm card-body">
-            <h5 class="card-title p-3">Current Active Borrowers</h5>
+            <h5 class="card-title p-3">Current Active Borrowers (Awaiting Return)</h5>
             <div class="table-responsive">
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
@@ -267,7 +275,7 @@
                                 @endif
                             </td>
                             <td>
-                                <form action="{{ route('head.reservation.return', $borrower->id) }}" method="POST" class="d-inline">
+                                <form action="{{ route('head.reservation.return', $borrower->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Confirm book return for {{ $borrower->book->title }}?');">
                                     @csrf
                                     @method('PUT')
                                     <button type="submit" class="btn btn-success btn-sm">
@@ -289,36 +297,52 @@
         </div>
     </div>
 
+    @include('head.partials.profile-modal')
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Search functionality for reservations
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase().trim();
-                const tableRows = document.querySelectorAll('table tbody tr');
-                
-                tableRows.forEach(row => {
-                    const rowText = row.textContent.toLowerCase();
-                    const matches = rowText.includes(searchTerm);
-                    row.style.display = matches ? '' : 'none';
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    const tableRows = document.querySelectorAll('table tbody tr');
+                    
+                    tableRows.forEach(row => {
+                        const rowText = row.textContent.toLowerCase();
+                        const matches = rowText.includes(searchTerm);
+                        // Hide/show the row based on the match
+                        row.style.display = matches ? '' : 'none';
+                    });
+                });
+            }
+
+            // Function for column filtering (replicates the assumed utility of the select boxes)
+            document.querySelectorAll('.table-column-filter').forEach(select => {
+                select.addEventListener('change', function() {
+                    const filterValue = this.value.toLowerCase();
+                    const tableId = this.getAttribute('data-filter-table');
+                    const columnIndex = parseInt(this.getAttribute('data-filter-column'));
+                    const table = document.querySelector(`[data-filter-id="${tableId}"]`);
+                    
+                    if (table) {
+                        table.querySelectorAll('tbody tr').forEach(row => {
+                            const cell = row.children[columnIndex];
+                            if (cell) {
+                                const cellText = cell.textContent.toLowerCase().trim();
+                                
+                                if (filterValue === '' || cellText.includes(filterValue)) {
+                                    row.style.display = '';
+                                } else {
+                                    row.style.display = 'none';
+                                }
+                            }
+                        });
+                    }
                 });
             });
-        }
-
-        function deleteReservation(id) {
-            if (confirm('Are you sure you want to delete this reservation?')) {
-                fetch(`/head/reservation/${id}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Content-Type': 'application/json'
-                    }
-                }).then(() => location.reload());
-            }
-        }
+        });
     </script>
-@include('head.partials.profile-modal')
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

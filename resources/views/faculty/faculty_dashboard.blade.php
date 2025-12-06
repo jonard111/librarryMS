@@ -3,44 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Faculty Dashboard</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
+  <title>faculty Dashboard</title>
+  @vite(['resources/js/app.js', 'resources/css/design.css'])
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="../Css/book.css">
- @vite(['resources/js/app.js', 'resources/css/design.css'])
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   </head>
 <body>
 
 <input type="checkbox" id="sidebar-toggle">
 
 <div class="sidebar">
-  <a href="javascript:void(0)" class="profile-info-link" data-bs-toggle="modal" data-bs-target="#facultyProfileModal">
-    <div class="profile-info">
-      <i class="fas fa-user-circle"></i>
-      <div class="profile-text">
-        <h2>{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h2>
+    <a href="javascript:void(0)" class="profile-info-link" data-bs-toggle="modal" data-bs-target="#facultyProfileModal">
+      <div class="profile-info">
+        <i class="fas fa-user-circle"></i>
+        <div class="profile-text">
+          <h2>{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}</h2>
+        </div>
       </div>
-    </div>
-  </a>
+    </a>
 
-  <nav class="nav flex-column text-start">
+    <nav class="nav flex-column text-start">
       <a href="{{ route('faculty.dashboard') }}" class="nav-link active">
-        <i class="fas fa-chart-bar me-2"></i><span>Dashboard</span> 
+        <i class="fas fa-chart-bar me-2"></i><span>Dashboard</span>
       </a>
-       <a href="{{ route('faculty.borrowedBooks') }}" class="nav-link ">
-         <i class="fas fa-file-alt me-2"></i><span> My Borrowed Books</span>
-     </a>
-      <a href="{{ route('faculty.requestBooks') }}" class="nav-link ">
-        <i class="fas fa-file-alt me-2"></i><span>Request Books</span> 
+      <a href="{{ route('faculty.borrowed') }}" class="nav-link">
+        <i class="fas fa-file-alt me-2"></i><span>My Borrowed Books</span>
       </a>
-      <a href="{{ route('faculty.announcement') }}" class="nav-link ">
-        <i class="fas fa-bullhorn me-2"></i><span>Announcements</span> 
+      <a href="{{ route('faculty.notifications') }}" class="nav-link">
+        <i class="fas fa-bell me-2"></i><span>Notifications</span>
       </a>
-       <a href="{{ route('faculty.notification') }}" class="nav-link">
-        <i class="fas fa-solid fa-bell me-2"></i><span>Notification</span> 
-      </a>
-       <a href="{{ route('faculty.books') }}" class="nav-link">
-        <i class="fas fa-book-open me-2"></i><span>Books</span> 
+      <a href="{{ route('faculty.books') }}" class="nav-link">
+        <i class="fas fa-book-open me-2"></i><span>Books</span>
       </a>
     <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link fw-bold logoutLink">
     <i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span>
@@ -48,10 +42,14 @@
     <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
     @csrf
     </form>
-  </nav>
+
+      <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+          @csrf
+      </form>
+    </nav>
 </div>
 
- <div class="sidebar-overlay"></div>
+<div class="sidebar-overlay"></div>
 
 <div class="content flex-grow-1">
 
@@ -60,7 +58,7 @@
         <label for="sidebar-toggle" class="toggle-btn d-lg-none me-2">
           <i class="fas fa-bars"></i>
         </label>
-        <h3 class="mb-0 fw-semibold text-success">Welcome Faculty</h3>
+        <h3 class="mb-0 fw-semibold text-success">Welcome {{ auth()->user()->first_name }}</h3>
       </div>
 
       <div class="d-flex align-items-center gap-2">
@@ -68,12 +66,12 @@
           <span class="fw-bold text-success d-block">Library MS</span>
           <small class="text-muted">Management System</small>
         </div>
-         <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" style="height:50px;">
+        <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" style="height:50px;">
       </div>
     </div>
 
-  <div class="row g-4">
-
+    <!-- Dashboard Cards -->
+    <div class="row g-4">
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -88,7 +86,6 @@
           </div>
         </div>
       </div>
-    
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -103,7 +100,6 @@
           </div>
         </div>
       </div>
-
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -118,7 +114,6 @@
           </div>
         </div>
       </div>
-
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
           <div class="card-body d-flex justify-content-between align-items-center">
@@ -133,61 +128,82 @@
           </div>
         </div>
       </div>
+    </div>
 
-  </div>
-<br>
+    <br>
 
-   <section >
-            <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3 ">
-                <h3 class="mb-2 mb-md-0">My Reading List</h3>
+    <!-- Alerts Section -->
+    @if(isset($overdueBooks) && $overdueBooks->count() > 0)
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>Overdue Books</h5>
+            <p class="mb-2">You have <strong>{{ $overdueBooks->count() }}</strong> overdue book(s). Please return them as soon as possible to avoid additional fines.</p>
+            <ul class="mb-0">
+                @foreach($overdueBooks->take(3) as $overdue)
+                    <li><strong>{{ $overdue->book->title ?? 'N/A' }}</strong> - Due: {{ $overdue->due_date ? $overdue->due_date->format('M d, Y') : 'N/A' }}</li>
+                @endforeach
+            </ul>
+            <a href="{{ route('faculty.borrowed') }}" class="btn btn-sm btn-outline-danger mt-2">View All</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(isset($booksDueSoon) && $booksDueSoon->count() > 0)
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-clock me-2"></i>Books Due Soon</h5>
+            <p class="mb-2">You have <strong>{{ $booksDueSoon->count() }}</strong> book(s) due within the next 3 days.</p>
+            <ul class="mb-0">
+                @foreach($booksDueSoon->take(3) as $due)
+                    <li><strong>{{ $due->book->title ?? 'N/A' }}</strong> - Due: {{ $due->due_date ? $due->due_date->format('M d, Y') : 'N/A' }}</li>
+                @endforeach
+            </ul>
+            <a href="{{ route('faculty.borrowed') }}" class="btn btn-sm btn-outline-warning mt-2">View All</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(isset($readyForPickup) && $readyForPickup->count() > 0)
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <h5 class="alert-heading"><i class="fas fa-check-circle me-2"></i>Books Ready for Pickup</h5>
+            <p class="mb-2">You have <strong>{{ $readyForPickup->count() }}</strong> approved book(s) ready for pickup!</p>
+            <ul class="mb-0">
+                @foreach($readyForPickup as $pickup)
+                    <li><strong>{{ $pickup->book->title ?? 'N/A' }}</strong></li>
+                @endforeach
+            </ul>
+            <a href="{{ route('faculty.borrowed') }}" class="btn btn-sm btn-outline-success mt-2">View Details</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+    
+    <!-- Recent Announcements -->
+    @if(isset($recentAnnouncements) && $recentAnnouncements->count() > 0)
+        <section class="mb-4">
+            <div class="section-header d-flex flex-wrap justify-content-between align-items-center mb-3">
+                <h3 class="mb-2 mb-md-0"><i class="fas fa-bullhorn me-2"></i>Recent Announcements</h3>
+                <a href="{{ route('faculty.notifications') }}" class="btn btn-outline-primary btn-sm">View All</a>
             </div>
-             <div class="row row-cols-2 row-cols-md-6 g-3">
-                <div class="col-12 col-sm-6 col-md-3 mb-4">
-                    <div class="card card-wrapper shadow dashboard-card">
-                        <img src="../images/bookcover1.jpg" class="card-img-top" alt="How to Study Smart" />
-                        <div class="card-body p-2">
-                            <h5 class="card-title mb-1">How to Study Smart</h5>
-                            <small class="card-subtitle text-muted">Adam Robinson</small>
+            <div class="row g-3">
+                @foreach($recentAnnouncements as $announcement)
+                    <div class="col-12 col-md-6 col-lg-4">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge bg-{{ $announcement->type === 'info' ? 'info' : ($announcement->type === 'warning' ? 'warning' : 'primary') }}">
+                                        {{ ucfirst($announcement->type ?? 'General') }}
+                                    </span>
+                                    <small class="text-muted">{{ $announcement->created_at->diffForHumans() }}</small>
+                                </div>
+                                <h6 class="card-title">{{ $announcement->title }}</h6>
+                                <p class="card-text text-muted small">{{ \Illuminate\Support\Str::limit($announcement->content, 100) }}</p>
+                            </div>
                         </div>
-                         <button class="btn btn-outline-success btn-sm m-2">Continue Reading</button>
                     </div>
-                </div>
-                <div class="col-12 col-sm-6 col-md-3 mb-4">
-                    <div class="card card-wrapper shadow dashboard-card">
-                        <img src="../images/bookcover2.jpg" class="card-img-top" alt="Mindset" />
-                        <div class="card-body p-2">
-                            <h5 class="card-title mb-1">Mindset</h5>
-                            <small class="card-subtitle text-muted">Carol S. Dweck</small>
-                        </div>
-                          <button class="btn btn-outline-success btn-sm m-2">Continue Reading</button>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-6 col-md-3 mb-4">
-                    <div class="card card-wrapper shadow dashboard-card">
-                        <img src="../images/bookcover3.jpg" class="card-img-top" alt="Make It Stick" />
-                        <div class="card-body p-2">
-                            <h5 class="card-title mb-1">Make It Stick</h5>
-                            <small class="card-subtitle text-muted">Peter C. Brown</small>
-                        </div>
-                          <button class="btn btn-outline-success btn-sm m-2">Continue Reading</button>
-                    </div>
-                </div>
-                <div class="col-12 col-sm-6 col-md-3 mb-4">
-                    <div class="card card-wrapper shadow dashboard-card">
-                        <img src="../images/bookcover2.jpg" class="card-img-top" alt="The Learning Habit" />
-                        <div class="card-body p-2">
-                            <h5 class="card-title mb-1">The Learning Habit</h5>
-                            <small class="card-subtitle text-muted">Stephanie Donaldson-Pressman</small>
-                        </div>
-                         <button class="btn btn-outline-success btn-sm m-2">Continue Reading</button>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </section>
-
+    @endif
 </div>
 
 @include('faculty.partials.profile-modal')
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
