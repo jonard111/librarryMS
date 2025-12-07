@@ -3,15 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notification</title>
-  @vite(['resources/css/design.css'])
+  <title>Notifications</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  {{-- Assuming design.css contains Coastal Blue theme variables --}}
+  @vite(['resources/css/design.css']) 
   </head>
-<body>
+<body class="bg-light">
 
 <input type="checkbox" id="sidebar-toggle">
 
+{{-- SIDEBAR (Assistant Navigation) --}}
 <div class="sidebar">
   <a href="javascript:void(0)" class="profile-info-link" data-bs-toggle="modal" data-bs-target="#assistantProfileModal">
     <div class="profile-info">
@@ -50,79 +52,234 @@
 
 <div class="sidebar-overlay"></div>
 
+{{-- CONTENT AREA --}}
 <div class="content flex-grow-1">
-  <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-      <div class="d-flex align-items-center gap-2">
-        <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
-        {{-- FIXED: Use text-primary for Coastal Blue theme --}}
-        <h3 class="mb-0 fw-semibold text-success">Notifications</h3>
-      </div>
-
-      <div class="d-flex align-items-center gap-2">
-        <div class="text-end">
-          {{-- FIXED: Use text-primary for Coastal Blue theme --}}
-          <span class="fw-bold text-success d-block">Library MS</span>
-          <small class="text-muted">Management System</small>
-        </div>
-        <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" alt="DNSC Logo" style="height:50px;">
-      </div>
-  </div>
-
-  <div class="card shadow border-0">
-    <div class="list-group list-group-flush" id="notificationList">
-      @forelse($notifications as $notification)
-        @php
-            // Check if the notification is a database Model (Announcement) or a custom object
-            $isAnnouncement = method_exists($notification, 'badgeClass');
-
-            if ($isAnnouncement) {
-                // Logic for Announcement Model
-                $badge = $notification->badgeClass();
-                $statusLabel = $notification->statusLabel();
-                $postedBy = $notification->creator
-                    ? $notification->creator->first_name . ' ' . $notification->creator->last_name
-                    : 'System';
-                $bodyText = strip_tags($notification->body);
-            } else {
-                // Logic for Custom Alert Object (from controller aggregation)
-                $statusMap = match($notification->type) {
-                    'reservation_pending' => ['badge' => 'warning', 'label' => 'New Request'],
-                    'overdue_alert'       => ['badge' => 'danger', 'label' => 'Overdue Alert'],
-                    default               => ['badge' => 'primary', 'label' => 'System Alert'],
-                };
-
-                $badge = $statusMap['badge'];
-                $statusLabel = $statusMap['label'];
-                $postedBy = 'System/Task';
-                $bodyText = $notification->body;
-            }
-            
-            $dateLabel = optional($notification->created_at)->diffForHumans() ?? 'Just now';
-            $publishDate = optional($notification->created_at)->format('M d, Y');
-
-        @endphp
-        <div class="list-group-item list-group-item-action py-3 d-flex align-items-center">
-          <div class="d-flex align-items-center me-3 flex-grow-1 overflow-hidden">
-            <div class="me-3 overflow-hidden">
-              <h6 class="mb-0 text-truncate fw-bold">{{ $notification->title }}</h6>
-              <span class="text-muted small text-truncate d-none d-lg-inline-block">
-                {{ $postedBy }} • {{ $publishDate }} • {{ \Illuminate\Support\Str::limit($bodyText, 160) }}
-              </span>
-              <span class="text-muted small d-lg-none">{{ $dateLabel }}</span>
+    
+    <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+        <div class="d-flex align-items-center gap-2 flex-grow-1 me-3"> 
+            <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
+            <div class="input-group">
+                <input type="text" class="form-control" id="searchNotificationInput" placeholder="Search notifications">
+                <button class="btn btn-outline-secondary" type="button"><i class="fas fa-search"></i></button>
             </div>
-            <span class="badge bg-{{ $badge }} flex-shrink-0 d-none d-md-inline ms-auto">{{ $statusLabel }}</span>
-          </div>
         </div>
-      @empty
-        <div class="list-group-item text-center py-5 text-muted">
-          No notifications yet.
+        <div class="d-flex align-items-center gap-2">
+            <div class="text-end">
+                <span class="fw-bold text-success d-block">Library MS</span>
+                <small class="text-muted">Management System</small>
+            </div>
+            <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" alt="DNSC Logo" style="height:50px;">
         </div>
-      @endforelse
     </div>
-  </div>
+
+    <div class="notifications-section">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0 text-success"><i class="fas fa-bell me-2"></i>Notifications</h3>
+        </div>
+
+        <div class="card shadow border-0">
+            <div class="list-group list-group-flush">
+                @forelse($notifications ?? collect() as $notification)
+                    @php
+                        // Determine if it's a database Announcement model or a custom alert object
+                        $isAnnouncement = ($notification->source ?? 'announcement') === 'announcement';
+
+                        // --- FIX: Safely determine the postedBy user ---
+                        if ($isAnnouncement) {
+                            $postedBy = optional($notification->creator)->first_name . ' ' . optional($notification->creator)->last_name;
+                            if (!$notification->creator) {
+                                $postedBy = 'System';
+                            }
+                        } else {
+                            $postedBy = 'System/Task'; // Custom alerts are generated by the system
+                        }
+                        
+                        $dateLabel = optional($notification->publish_at ?? $notification->created_at)->diffForHumans() ?? 'Just now';
+                        
+                        // Map notification type to display details
+                        $typeInfo = match($notification->type ?? 'announcement') {
+                            'announcement' => ['color' => 'primary', 'label' => 'Announcement', 'icon' => 'bullhorn', 'alert_class' => ''],
+                            'penalties' => ['color' => 'danger', 'label' => 'Penalty Notice', 'icon' => 'exclamation-triangle', 'alert_class' => ''],
+                            'reminder' => ['color' => 'warning', 'label' => 'Reminder', 'icon' => 'bell', 'alert_class' => ''],
+                            'alert' => ['color' => 'warning', 'label' => 'System Alert', 'icon' => 'exclamation-circle', 'alert_class' => ''],
+                            'book_update' => ['color' => 'info', 'label' => 'Book Update', 'icon' => 'book', 'alert_class' => ''],
+                            'reservation' => ['color' => 'danger', 'label' => 'Overdue Loan', 'icon' => 'clock', 'alert_class' => 'list-group-item-danger'],
+                            'reservation_pending' => ['color' => 'warning', 'label' => 'New Reservation', 'icon' => 'clipboard-list', 'alert_class' => 'list-group-item-warning'],
+                            'overdue' => ['color' => 'danger', 'label' => 'Overdue Notice', 'icon' => 'clock', 'alert_class' => 'list-group-item-danger'],
+                            default => ['color' => 'secondary', 'label' => 'Notification', 'icon' => 'bell', 'alert_class' => '']
+                        };
+                    @endphp
+                    <div class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center {{ $typeInfo['alert_class'] }}">
+                        <div class="d-flex align-items-center me-3 flex-grow-1 overflow-hidden">
+                            
+                            {{-- Icon based on Type --}}
+                            <div class="me-3 text-{{ $typeInfo['color'] }}">
+                                <i class="fas fa-{{ $typeInfo['icon'] }} fs-5"></i>
+                            </div>
+                            
+                            <div class="me-3 overflow-hidden">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <h6 class="mb-0 text-truncate fw-bold">{{ $notification->title }}</h6>
+                                    <span class="badge bg-{{ $typeInfo['color'] }} flex-shrink-0">
+                                        {{ $typeInfo['label'] }}
+                                    </span>
+                                </div>
+                                <span class="text-muted small text-truncate d-none d-lg-inline-block">
+                                    {{ $postedBy }} • {{ optional($notification->publish_at ?? $notification->created_at)->format('M d, Y') }} • {{ \Illuminate\Support\Str::limit(strip_tags($notification->body ?? ''), 160) }}
+                                </span>
+                                <span class="text-muted small d-lg-none">
+                                    {{ $dateLabel }}
+                                </span>
+                            </div>
+                        </div>
+                        {{-- Button links to reservation page for action --}}
+                        @if($notification->type === 'reservation_pending' || $notification->type === 'overdue')
+                            <a href="{{ route('assistant.reservation') }}" class="btn btn-sm btn-{{ $typeInfo['color'] }} flex-shrink-0 ms-2">
+                                <i class="fas fa-external-link-alt me-1"></i>Take Action
+                            </a>
+                        @else
+                            <button class="btn btn-sm btn-outline-secondary flex-shrink-0 ms-2" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#notificationModal{{ $notification->id }}">
+                                <i class="fas fa-eye me-1"></i>View Details
+                            </button>
+                        @endif
+                    </div>
+                @empty
+                    <div class="list-group-item text-center py-5 text-muted">
+                        <i class="fas fa-info-circle me-2"></i>No notifications yet. You're all caught up!
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </div>
 </div>
+
+{{-- MODALS --}}
+@foreach($notifications ?? collect() as $notification)
+    @php
+        $isAnnouncement = ($notification->source ?? 'announcement') === 'announcement';
+
+        // Set properties for the modal based on type
+        if ($isAnnouncement) {
+            $postedBy = optional($notification->creator)->first_name . ' ' . optional($notification->creator)->last_name ?? 'System';
+            // FIX: Use ?? [] for audience property to safely initialize the array map
+            $audience = implode(', ', array_map('ucfirst', $notification->audience ?? [])) ?: 'All Users';
+            $expiresAt = $notification->expires_at ?? null;
+        } else {
+            $postedBy = 'System/Library';
+            // FIX: Use ?? [] for audience property to safely initialize the array map
+            $audience = implode(', ', array_map('ucfirst', $notification->audience ?? [])) ?: 'Assistant';
+            $expiresAt = null;
+        }
+        
+        $publishDate = optional($notification->publish_at ?? $notification->created_at)->format('M d, Y');
+        $publishTime = optional($notification->publish_at ?? $notification->created_at)->format('h:i A');
+        
+        $typeInfo = match($notification->type ?? 'announcement') {
+            'announcement' => ['color' => 'primary', 'label' => 'Announcement', 'icon' => 'bullhorn'],
+            'penalties' => ['color' => 'danger', 'label' => 'Penalties', 'icon' => 'exclamation-triangle'],
+            'reminder' => ['color' => 'warning', 'label' => 'Reminder', 'icon' => 'bell'],
+            'alert' => ['color' => 'warning', 'label' => 'Alert', 'icon' => 'exclamation-circle'],
+            'book_update' => ['color' => 'info', 'label' => 'Book Update', 'icon' => 'book'],
+            'reservation' => ['color' => 'danger', 'label' => 'Overdue Loan', 'icon' => 'clock'],
+            'reservation_pending' => ['color' => 'warning', 'label' => 'New Reservation', 'icon' => 'clipboard-list'],
+            'overdue' => ['color' => 'danger', 'label' => 'Overdue Notice', 'icon' => 'clock'],
+            default => ['color' => 'secondary', 'label' => 'Notification', 'icon' => 'bell']
+        };
+    @endphp
+    <div class="modal fade" id="notificationModal{{ $notification->id }}" tabindex="-1" aria-labelledby="notificationModalLabel{{ $notification->id }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="notificationModalLabel{{ $notification->id }}">
+                        <i class="fas fa-{{ $typeInfo['icon'] }} me-2 text-{{ $typeInfo['color'] }}"></i>{{ $notification->title }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <span class="badge bg-{{ $typeInfo['color'] }} me-2">
+                            <i class="fas fa-{{ $typeInfo['icon'] }} me-1"></i>{{ $typeInfo['label'] }}
+                        </span>
+                        {{-- Only display expiration for Announcements --}}
+                        @if($isAnnouncement && $expiresAt)
+                            <span class="badge bg-secondary">
+                                <i class="fas fa-calendar-times me-1"></i>Expires: {{ $expiresAt->format('M d, Y') }}
+                            </span>
+                        @endif
+                    </div>
+                    
+                    <div class="mb-3">
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-user me-2"></i><strong>Posted by:</strong> {{ $postedBy }}
+                        </p>
+                        <p class="text-muted mb-1">
+                            <i class="fas fa-calendar me-2"></i><strong>Published:</strong> {{ $publishDate }} at {{ $publishTime }}
+                        </p>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-users me-2"></i><strong>Audience:</strong> {{ $audience }}
+                        </p>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="notification-content">
+                        <h6 class="mb-2">Details:</h6>
+                        
+                        {{-- ACTIONABLE ALERT INFORMATION --}}
+                        @if($notification->type === 'reservation_pending' || $notification->type === 'overdue')
+                            <div class="alert alert-{{ $typeInfo['color'] }} small py-2 mb-3">
+                                @if($notification->type === 'reservation_pending')
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    **ACTION REQUIRED:** Please review this new request on the Reservation Page.
+                                @elseif($notification->type === 'overdue')
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    **URGENT:** This item is past due. Check Reservation Records to settle fines or process return.
+                                @endif
+                            </div>
+                        @endif
+
+                        <div class="text-muted">
+                            {!! nl2br(e($notification->body)) !!}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    @if($notification->type === 'reservation_pending' || $notification->type === 'overdue')
+                         <a href="{{ route('assistant.reservation') }}" class="btn btn-primary">
+                            Go to Reservation Management <i class="fas fa-arrow-right ms-2"></i>
+                         </a>
+                    @endif
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endforeach
 
 @include('assistant.partials.profile-modal')
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Search functionality for notifications
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchNotificationInput = document.getElementById('searchNotificationInput');
+        if (searchNotificationInput) {
+            searchNotificationInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase().trim();
+                const notificationCards = document.querySelectorAll('.list-group-item'); // Target list items directly
+                
+                notificationCards.forEach(card => {
+                    // Check text content of the list item
+                    const content = card.textContent.toLowerCase();
+                    
+                    const matches = content.includes(searchTerm);
+                    
+                    card.style.display = matches ? 'flex' : 'none'; // Use 'flex' since list-group-item is a flex container
+                });
+            });
+        }
+    });
+</script>
 </body>
 </html>

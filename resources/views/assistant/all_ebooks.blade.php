@@ -96,7 +96,7 @@
                 @forelse(($ebooksByCategory->get($id) ?? collect()) as $ebook)
                     <div class="col-12 col-sm-6 col-md-3 mb-4">
                         <div class="card card-wrapper shadow dashboard-card h-100">
-                            <span class="badge-status badge-completed">Views: {{ $ebook->views }}</span>
+                            <span class="badge-status badge-completed text-white">Views: {{ $ebook->views }}</span>
                             <img src="{{ $ebook->coverUrl() ?? 'https://placehold.co/300x420?text=No+Cover' }}" class="card-img-top" alt="{{ $ebook->title }}" />
                             <div class="card-body p-2 d-flex flex-column">
                                 <h5 class="card-title mb-1 text-truncate">{{ $ebook->title }}</h5>

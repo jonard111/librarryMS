@@ -161,36 +161,42 @@ class AssistantController extends Controller
      * * Fetches system announcements and active reservation requests for attention.
      * * @return \Illuminate\View\View
      */
-    public function notification()
-    {
-        // 1. Fetch System Announcements
-        $announcements = Announcement::published()
-            ->with('creator')
-            ->visibleForRole('assistant')
-            ->latest('publish_at')
-            ->take(10)
-            ->get();
+public function notification()
+{
+    // 1. Fetch System Announcements
+    $announcements = Announcement::published()
+        ->with('creator')
+        ->visibleForRole('assistant')
+        ->latest('publish_at')
+        ->take(10)
+        ->get();
 
-        // 2. Fetch Pending Reservations (Needs Assistant action)
-        $pendingReservations = BookReservation::with(['user', 'book'])
-            ->where('status', 'pending')
-            ->latest('created_at')
-            ->get()
-            ->map(fn($res) => (object) [
-                'id' => 'res_pending_' . $res->id, // Unique ID for custom object
-                'title' => 'New Reservation Request: ' . optional($res->book)->title,
-                'body' => "A new reservation request has been submitted by " . optional($res->user)->full_name . " for '" . optional($res->book)->title . "'. Please review and approve/reject.",
-                'type' => 'reservation_pending',
-                'created_at' => $res->created_at,
-            ]);
+    // 2. Fetch Pending Reservations (Needs Assistant action)
+$pendingReservations = BookReservation::with(['user', 'book'])
+    ->where('status', 'pending')
+    ->latest('created_at')
+    // EXECUTE THE QUERY FIRST using ->get()
+    ->get()
+    // NOW you can use ->map() on the resulting Collection
+    ->map(fn($res) => (object) [
+        'id' => 'res_pending_' . $res->id, // Unique ID for custom object
+        'title' => 'New Reservation Request: ' . optional($res->book)->title,
+        'body' => "A new reservation request has been submitted by " . optional($res->user)->full_name . " for '" . optional($res->book)->title . "'. Please review and approve/reject.",
+        'type' => 'reservation_pending',
+        'created_at' => $res->created_at,
+        'creator' => null, 
+    ]);
+        
+    // 3. Fetch Overdue Alerts (Optional, but useful for Assistant dashboard)
+    // You should add similar logic here if you want overdue alerts to show up in the notification stream.
+    
+    // 4. Combine and Sort notifications by timestamp
+    $notifications = $announcements
+        ->concat($pendingReservations)
+        ->sortByDesc('created_at');
 
-        // 3. Combine and Sort notifications by timestamp
-        $notifications = $announcements
-            ->concat($pendingReservations)
-            ->sortByDesc('created_at');
-
-        return view('assistant.notification', compact('notifications'));
-    }
+    return view('assistant.notification', compact('notifications'));
+}
 
     /**
      * Reservation Records Page
@@ -220,6 +226,7 @@ class AssistantController extends Controller
                                         ->where('due_date', '<', now())
                                         ->count(),
         ]);
+        
     }
 
     /**

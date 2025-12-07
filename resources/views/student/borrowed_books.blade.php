@@ -82,9 +82,18 @@
     <!-- Borrowed Books Table -->
     <div class="card border-0 shadow-sm mb-4">
       <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-3"><i class="fas fa-book me-2"></i>Recent Borrowed</h5>
+                  <div class="d-flex align-items-center gap-2">
+                    <select class="form-select form-select-sm table-column-filter" data-filter-table="recentborrowedTable" data-filter-column="4" style="max-width: 180px;">
+                        <option value="">All Status</option>
+                        <option value="Returned">Returned</option>
+                        <option value="Picked Up">Picked Up</option>
+                    </select>
+                </div>
+        </div>
         <div class="table-responsive">
-          <table class="table table-hover table-striped align-middle">
+          <table class="table table-hover table-striped align-middle" data-filter-id="recentborrowedTable">
             <thead class="table-light">
               <tr>
                 <th>Book Name</th>
@@ -141,8 +150,6 @@
                         <option value="">All Status</option>
                         <option value="Pending">Pending</option>
                         <option value="Ready for Pickup">Ready for Pickup</option>
-                        <option value="Picked Up">Picked Up</option>
-                        <option value="Rejected">Rejected</option>
                     </select>
                 </div>
             </div>
@@ -242,6 +249,31 @@
                 });
             });
         }
+
+                    // Function for column filtering (replicates the assumed utility of the select boxes)
+            document.querySelectorAll('.table-column-filter').forEach(select => {
+                select.addEventListener('change', function() {
+                    const filterValue = this.value.toLowerCase();
+                    const tableId = this.getAttribute('data-filter-table');
+                    const columnIndex = parseInt(this.getAttribute('data-filter-column'));
+                    const table = document.querySelector(`[data-filter-id="${tableId}"]`);
+                    
+                    if (table) {
+                        table.querySelectorAll('tbody tr').forEach(row => {
+                            const cell = row.children[columnIndex];
+                            if (cell) {
+                                const cellText = cell.textContent.toLowerCase().trim();
+                                
+                                if (filterValue === '' || cellText.includes(filterValue)) {
+                                    row.style.display = '';
+                                } else {
+                                    row.style.display = 'none';
+                                }
+                            }
+                        });
+                    }
+                });
+            });
     });
 </script>
 </body>

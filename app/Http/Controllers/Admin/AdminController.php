@@ -275,10 +275,10 @@ class AdminController extends Controller
     public function books()
     {
         // Get most popular/recent books (limit to 6 for display)
-        $popularBooks = Book::latest()->take(6)->get();
+        $popularBooks = Book::latest()->take(4)->get();
         
         // Get most popular/recent ebooks (limit to 6 for display)
-        $popularEbooks = Ebook::latest()->take(6)->get();
+        $popularEbooks = Ebook::latest()->take(4)->get();
         
         return view('Admin.books', [
             'popularBooks' => $popularBooks,

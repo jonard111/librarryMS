@@ -255,13 +255,15 @@ Route::middleware(['auth', 'role:headlibrarian'])->prefix('head')->name('head.')
     // Books Overview
     Route::get('/books', function () {
         // FIX: Used aliased models (BookModel, EbookModel)
-        $popularBooks = BookModel::latest()->take(6)->get(); 
-        $popularEbooks = EbookModel::latest()->take(6)->get();
+        $popularBooks = BookModel::latest()->take(4)->get(); 
+        $popularEbooks = EbookModel::latest()->take(4)->get();
         return view('head.books', [
             'popularBooks' => $popularBooks,
             'popularEbooks' => $popularEbooks,
         ]);
     })->name('books');
+
+    
     
     // Reservations Management
     Route::get('/borrow-return', fn () => redirect()->route('head.reservation'))->name('borrowReturn');
