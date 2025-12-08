@@ -67,8 +67,8 @@
 
             <div class="d-flex align-items-center gap-2">
                 <div class="d-flex flex-column text-end">
-                    {{-- FIXED: Use text-primary --}}
-                    <span class="fw-bold text-primary d-block">Library MS</span>
+                   
+                    <span class="fw-bold text-success d-block">Library MS</span>
                     <small class="text-muted" style="font-size:0.85rem;">Management System</small>
                 </div>
                 <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" alt="DNSC Logo" style="height:50px;">
@@ -92,16 +92,16 @@
 
         {{-- DASHBOARD CARDS --}}
         <div class="row g-4 mb-4">
-            <h3 class="mb-0 fw-semibold text-primary">Manage Reservation & Borrow/Return</h3>
+            <h3 class="mb-0 fw-semibold text-success">Manage Reservation & Borrow/Return</h3>
 
             <div class="col-md-6 col-lg-3">
-                <div class="card border-0 shadow-sm dashboard-card">
+                <div class="card border-0 shadow-sm stats-card">
                     <div class="card-body d-flex justify-content-between align-items-center">
                         <div>
                             <p class="text-muted small mb-1">Active Reservations</p>
                             <h3 class="mb-0">{{ $activeReservations }}</h3>
                         </div>
-                        <i class="fas fa-calendar-plus text-primary fs-2"></i>
+                       <div class="stats-icon"> <i class="fas fa-calendar-plus text-success fs-2"></i></div>
                     </div>
                 </div>
             </div>

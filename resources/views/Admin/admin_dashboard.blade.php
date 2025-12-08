@@ -41,12 +41,40 @@
     <a href="{{ url('/admin/books') }}" class="nav-link">
       <i class="fas fa-book-open me-2"></i> <span>Books</span>
     </a>
-    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="nav-link fw-bold logoutLink">
-    <i class="fas fa-sign-out-alt me-2"></i> <span>Logout</span>
-    </a>
-    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+    <a href="#" 
+   data-bs-toggle="modal" 
+   data-bs-target="#logoutConfirmModal" 
+   class="nav-link fw-bold logoutLink">
+    <i class="fas fa-sign-out-alt me-2"></i> 
+    <span>Logout</span>
+</a>
+
+<form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
     @csrf
-    </form>
+</form>
+
+<div class="modal fade" id="logoutConfirmModal" tabindex="-1" aria-labelledby="logoutConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="logoutConfirmModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i> Confirm Logout
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold">Are you sure do you want to log out?</p>
+                <p class="text-muted small mb-0">You will need to sign in again to access the dashboard.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="document.getElementById('logout-form').submit();">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
   </nav>
 </div>
 

@@ -65,7 +65,7 @@
       <div class="d-flex align-items-center gap-2">
         <div class="d-flex flex-column text-end">
           {{-- FIXED: Use text-primary --}}
-          <span class="fw-bold text-primary d-block">Library MS</span> 
+          <span class="fw-bold text-success d-block">Library MS</span> 
           <small class="text-muted" style="font-size:0.85rem;">Management System</small>
         </div>
         <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" alt="DNSC Logo" style="height:50px;">
@@ -88,7 +88,7 @@
 
     {{-- STUDENT REGISTRATION STATS CARDS --}}
     <div class="row g-4 mb-4">
-      <h3 class="mb-0 fw-semibold text-primary">Student Registration Overview</h3>
+      <h3 class="mb-0 fw-semibold text-success">Student Registration Overview</h3>
 
       <div class="col-md-6 col-lg-3">
         <div class="card border-0 shadow-sm stats-card">
@@ -102,7 +102,7 @@
                 <span class="text-muted small ms-1">vs last month</span>
               </div>
             </div>
-            <div class="stats-icon text-primary">
+            <div class="stats-icon text-success">
               <i class="fas fa-users"></i>
             </div>
           </div>
@@ -116,11 +116,11 @@
               <p class="text-muted small mb-1">Active Student</p>
               <h3 class="mb-2">{{ $activeStudents }}</h3>
               <div class="d-flex align-items-center">
-                <span class="{{ $activeChange >= 0 ? 'text-primary' : 'text-danger' }} small">{{ $activeChange >= 0 ? '+' : '' }}{{ $activeChange }}%</span>
+                <span class="{{ $activeChange >= 0 ? 'text-success' : 'text-danger' }} small">{{ $activeChange >= 0 ? '+' : '' }}{{ $activeChange }}%</span>
                 <span class="text-muted small ms-1">vs last month</span>
               </div>
             </div>
-            <div class="stats-icon text-primary">
+            <div class="stats-icon text-success">
               <i class="fas fa-user-check"></i>
             </div>
           </div>
@@ -134,11 +134,11 @@
               <p class="text-muted small mb-1">Inactive Students</p>
               <h3 class="mb-2">{{ $inactiveStudents }}</h3>
               <div class="d-flex align-items-center">
-                <span class="{{ $inactiveChange >= 0 ? 'text-primary' : 'text-danger' }} small">{{ $inactiveChange >= 0 ? '+' : '' }}{{ $inactiveChange }}%</span>
+                <span class="{{ $inactiveChange >= 0 ? 'text-success' : 'text-danger' }} small">{{ $inactiveChange >= 0 ? '+' : '' }}{{ $inactiveChange }}%</span>
                 <span class="text-muted small ms-1">vs last month</span>
               </div>
             </div>
-            <div class="stats-icon text-primary">
+            <div class="stats-icon text-success">
               <i class="fas fa-user-times"></i>
             </div>
           </div>
@@ -152,11 +152,11 @@
               <p class="text-muted small mb-1">New Students</p>
               <h3 class="mb-2">{{ $newStudents }}</h3>
               <div class="d-flex align-items-center">
-                <span class="{{ $newChange >= 0 ? 'text-primary' : 'text-danger' }} small">{{ $newChange >= 0 ? '+' : '' }}{{ $newChange }}%</span>
+                <span class="{{ $newChange >= 0 ? 'text-success' : 'text-danger' }} small">{{ $newChange >= 0 ? '+' : '' }}{{ $newChange }}%</span>
                 <span class="text-muted small ms-1">vs last month</span>
               </div>
             </div>
-            <div class="stats-icon text-primary">
+            <div class="stats-icon text-success">
               <i class="fas fa-calendar-plus"></i>
             </div>
           </div>
@@ -355,8 +355,8 @@
             <div class="d-flex gap-2">
                 {{-- Filter controls preserved --}}
                 <select class="form-select form-select-sm table-column-filter" data-filter-table="returnedBooksTable" data-filter-column="6" style="max-width: 200px;">
-                    <option value="">All Books</option>
-                    <option value="With Fine">With Fine</option>
+                    <option value="">All Status</option>
+                    <option value="Fine Paid">Fine Paid</option>
                     <option value="No Fine">No Fine</option>
                 </select>
             </div>

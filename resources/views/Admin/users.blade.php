@@ -76,127 +76,151 @@
 
         <h3 class="mb-0 fw-semibold text-success">Manage Users</h3><br>
 
-  <!-- Approved Users Table -->
-  <div class="card shadow-sm mb-4">
+<div class="card shadow-sm mb-4">
     <div class="card-body">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold mb-0">Approved Users</h5>
-        <div class="d-flex gap-2">
-          <select class="form-select form-select-sm table-column-filter" data-filter-table="approvedUsersTable" data-filter-column="3" style="max-width: 150px;">
-            <option value="">All Roles</option>
-            <option value="student">Student</option>
-            <option value="faculty">Faculty</option>
-            <option value="assistant">Assistant</option>
-            <option value="headlibrarian">Head Librarian</option>
-          </select>
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0 ">Approved Users</h5>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm table-column-filter" 
+                        data-filter-table="approvedUsersTable" 
+                        data-filter-column="3"  {{-- Corrected Index for Role --}}
+                        style="max-width: 150px;">
+                    <option value="">All Roles</option>
+                    <option value="student">Student</option>
+                    <option value="faculty">Faculty</option>
+                    <option value="assistant">Assistant</option>
+                    <option value="headlibrarian">Head Librarian</option>
+                </select>
+            </div>
         </div>
-      </div>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle filterable-table" data-filter-id="approvedUsersTable">
-          <thead class="table-light">
-            <tr>
-              <th>User ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-              <th>Registration Date</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @foreach($approvedUsers as $user)
-            <tr>
-              <td>{{ $user->userId }}</td>
-              <td>{{ $user->first_name }} {{ $user->last_name }}</td>
-              <td>{{ $user->email }}</td>
-              <td><span class="badge bg-primary">{{ ucfirst($user->role) }}</span></td>
-              <td><span class="badge bg-success">{{ ucfirst($user->account_status) }}</span></td>
-              <td>{{ $user->registration_date->format('Y-m-d') }}</td>
-              <td>
-                <button class="btn btn-sm btn-outline-primary edit-user-btn" 
-                        data-bs-toggle="modal" 
-                        data-bs-target="#editUserModal"
-                        data-user-id="{{ $user->userId }}"
-                        data-first-name="{{ $user->first_name }}"
-                        data-last-name="{{ $user->last_name }}"
-                        data-email="{{ $user->email }}"
-                        data-role="{{ $user->role }}"
-                        data-account-status="{{ $user->account_status }}">
-                  <i class="fas fa-edit"></i> Edit
-                </button>
-              </td>
-            </tr>
-            @endforeach
-          </tbody>
-        </table>
-      </div>
+        <div class="table-responsive">
+            {{-- ADDED filterable-table CLASS AND data-filter-id ATTRIBUTE --}}
+            <table class="table table-hover align-middle filterable-table" data-filter-id="approvedUsersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 10%;">User ID</th>
+                        <th style="width: 20%;">Name</th>
+                        <th style="width: 25%;">Email</th>
+                        <th style="width: 15%;">Role</th>
+                        <th style="width: 10%;">Status</th>
+                        <th style="width: 10%;">Registration Date</th>
+                        <th style="width: 10%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($approvedUsers as $user)
+                    <tr>
+                        <td>{{ $user->userId }}</td>
+                        <td>{{ $user->first_name }} {{ $user->last_name }}</td>
+                        <td>{{ $user->email }}</td>
+                        
+                        {{-- INDEX 3: Role - Ensure cell text is the raw value for filtering --}}
+                        <td>{{ $user->role }}</td>
+                        
+                        {{-- INDEX 4: Status --}}
+                        <td><span class="badge bg-success">{{ ucfirst($user->account_status) }}</span></td>
+                        
+                        {{-- INDEX 5: Registration Date --}}
+                        <td>{{ $user->created_at->format('M d, Y') }}</td> 
+                        
+                        {{-- INDEX 6: Actions --}}
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-user-btn" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editUserModal"
+                                    data-user-id="{{ $user->userId }}"
+                                    data-role="{{ $user->role }}"
+                                    data-account-status="{{ $user->account_status }}">
+                                <i class="fas fa-edit"></i> Edit
+                            </button>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4 table-empty-state">No approved users available.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
+</div>
 
-  <!-- Pending Users Table -->
-  <div class="card shadow-sm mb-5">
+<div class="card shadow-sm mb-5">
     <div class="card-header bg-transparent border-0 pt-4">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h5 class="fw-bold mb-0">Account Requests</h5>
-          <p class="text-muted small mb-0">Pending user registrations awaiting approval.</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="fw-bold mb-0">Account Requests</h5>
+                <p class="text-muted small mb-0">Pending user registrations awaiting approval.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <select class="form-select form-select-sm table-column-filter" 
+                        data-filter-table="pendingUsersTable" 
+                        data-filter-column="0" 
+                        style="max-width: 150px;">
+                    <option value="">All Roles</option>
+                    <option value="Student">Student</option> {{-- Filter value should match the output: ucfirst($user->role) --}}
+                    <option value="Faculty">Faculty</option>
+                    <option value="Assistant">Assistant</option>
+                    {{-- Note: 'headlibrarian' is excluded as per your option list --}}
+                </select>
+            </div>
         </div>
-        <div class="d-flex gap-2">
-          <select class="form-select form-select-sm table-column-filter" data-filter-table="pendingUsersTable" data-filter-column="0" style="max-width: 150px;">
-            <option value="">All Roles</option>
-            <option value="student">Student</option>
-            <option value="faculty">Faculty</option>
-            <option value="assistant">Assistant</option>
-          </select>
-        </div>
-      </div>
     </div>
 
     <div class="card-body">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle filterable-table" data-filter-id="pendingUsersTable">
-          <thead class="table-light">
-            <tr>
-              <th>Role</th>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>Email</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($pendingUsers as $user)
-            <tr>
-              <td>{{ ucfirst($user->role) }}</td>
-              <td>{{ $user->first_name }}</td>
-              <td>{{ $user->last_name }}</td>
-              <td>{{ $user->email }}</td>
-              <td class="d-flex gap-2">
-                <form action="{{ route('admin.user.approve', $user->userId) }}" method="POST">
-                  @csrf
-                  <button type="submit" class="btn btn-sm btn-outline-success">
-                    <i class="fas fa-check"></i>
-                  </button>
-                </form>
-                <form action="{{ route('admin.user.reject', $user->userId) }}" method="POST">
-                  @csrf
-                  <button type="submit" class="btn btn-sm btn-outline-danger">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </form>
-              </td>
-            </tr>
-            @empty
-            <tr>
-              <td colspan="5" class="text-center">No pending users.</td>
-            </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle filterable-table" data-filter-id="pendingUsersTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 15%;">Role</th>
+                        <th style="width: 20%;">First Name</th>
+                        <th style="width: 20%;">Last Name</th>
+                        <th style="width: 30%;">Email</th>
+                        <th style="width: 15%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($pendingUsers as $user)
+                    <tr>
+                        {{-- INDEX 0 (Role): Output is Ucfist. The filter options above are set to match this Ucfist output. --}}
+                        <td><span class="badge bg-warning text-dark">{{ ucfirst($user->role) }}</span></td>
+                        <td>{{ $user->first_name }}</td>
+                        <td>{{ $user->last_name }}</td>
+                        <td>{{ $user->email }}</td>
+                        <td class="d-flex gap-2">
+                          <form action="{{ route('admin.user.approve', $user->userId) }}" method="POST">
+                              @csrf
+                              <button 
+                                  type="submit" 
+                                  class="btn btn-sm btn-success" 
+                                  title="Approve"
+                                  onclick="return confirm('Are you sure you want to APPROVE this user registration? This action cannot be undone.');">
+                                  <i class="fas fa-check"></i> Approve
+                              </button>
+                          </form>
+                          <form action="{{ route('admin.user.reject', $user->userId) }}" method="POST">
+                              @csrf
+                              <button 
+                                  type="submit" 
+                                  class="btn btn-sm btn-outline-danger" 
+                                  title="Reject"
+                                  onclick="return confirm('Are you sure you want to REJECT this user registration? This action cannot be undone.');">
+                                  <i class="fas fa-times"></i> Reject
+                              </button>
+                          </form>
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4 table-empty-state">No pending user requests.</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
     </div>
-  </div>
+</div>
 
 </div>
 

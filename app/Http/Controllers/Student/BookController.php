@@ -23,9 +23,9 @@ class BookController extends Controller
 {
     /**
      * Display popular books and ebooks on the student dashboard.
-     * * Fetches the 4 most recent physical books and 4 most recent ebooks.
+     * Fetches the 4 most recent physical books and 4 most recent ebooks.
      * Checks if the authenticated user has any active reservation for the displayed books.
-     * * @return \Illuminate\View\View
+     * @return \Illuminate\View\View
      */
     public function index()
     {
@@ -64,7 +64,7 @@ class BookController extends Controller
     /**
      * Display all books organized by category.
      * Includes reservation status check for each book.
-     * * @return \Illuminate\View\View
+     * @return \Illuminate\View\View
      */
     public function allBooks()
     {
@@ -101,7 +101,7 @@ class BookController extends Controller
     /**
      * Check if user already has an active reservation for a book.
      * Used by AJAX calls to prevent duplicate reservations.
-     * * @param int $id Book ID
+     * @param int $id Book ID
      * @return \Illuminate\Http\JsonResponse
      */
     public function checkReservation($id)
@@ -134,7 +134,7 @@ class BookController extends Controller
     /**
      * Display detailed information about a specific book.
      * Includes reservation status and reading list status.
-     * * @param int $id Book ID
+     * @param int $id Book ID
      * @return \Illuminate\View\View
      */
     public function show($id)
@@ -150,13 +150,7 @@ class BookController extends Controller
 
     /**
      * Create a new book reservation request.
-     * * Process:
-     * 1. Validate user doesn't have existing reservation.
-     * 2. Check book availability.
-     * 3. Validate loan duration (max 30 days or 72 hours for students).
-     * 4. Create reservation with status 'pending'.
-     * 5. Redirect to borrowed books page.
-     * * @param \Illuminate\Http\Request $request
+     * @param \Illuminate\Http\Request $request
      * @param int $id Book ID
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -250,30 +244,31 @@ class BookController extends Controller
     /**
      * Display student's borrowed books and pending requests.
      * Shows two tables:
-     * 1. Recent Borrowed - books that were picked up or returned (historical records).
-     * 2. My Book Requests - pending, approved, or currently borrowed books (active statuses).
-     * * @return \Illuminate\View\View
+     * 1. Recent Borrowed - books that were picked up or returned (Active Loans & History).
+     * 2. My Book Requests - pending, approved, rejected, or cancelled requests (Request Pipeline).
+     * @return \Illuminate\View\View
      */
     public function borrowedBooks()
     {
         $userId = Auth::id();
         
-        // Get borrowed books (picked_up or returned status) - historical records
+        // 1. Get borrowed books (Active Loans & History: picked_up or returned status)
         $borrowedBooks = BookReservation::where('user_id', $userId)
             ->whereIn('status', ['picked_up', 'returned'])
             ->with('book')
             ->latest('pickup_date')
             ->get();
         
-        // Get book requests (pending, approved, picked_up)
+        // 2. Get book requests (Request Pipeline: pending, approved, rejected, cancelled)
+        // FIX: EXCLUDE 'picked_up' to ensure active loans are only in $borrowedBooks.
         $bookRequests = BookReservation::where('user_id', $userId)
-            ->whereIn('status', ['pending', 'approved', 'picked_up'])
+            ->whereIn('status', ['pending', 'approved', 'rejected', 'cancelled'])
             ->with('book')
             ->orderBy('created_at', 'desc')
             ->orderBy('reservation_date', 'desc')
             ->get();
         
-        // Calculate statistics
+        // Calculate statistics (these are often used for stat cards, assumed correct)
         $borrowedBooksCount = BookReservation::where('user_id', $userId)
             ->where('status', 'picked_up')
             ->count();
@@ -306,7 +301,7 @@ class BookController extends Controller
     /**
      * Cancel a pending or approved book reservation.
      * Only allows cancellation if status is 'pending' or 'approved' and belongs to the user.
-     * * @param int $id Reservation ID
+     * @param int $id Reservation ID
      * @return \Illuminate\Http\RedirectResponse
      */
     public function cancelRequest($id)

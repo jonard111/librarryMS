@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Books Category</title>
+    <title>Books Category (Faculty)</title>
     @vite(['resources/css/book.css'])
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" rel="stylesheet">
@@ -15,7 +15,7 @@
 
 <div class="sidebar d-flex flex-column">
     <div class="text-center mb-4 profile-info">
-      <h2>Category</h2>
+        <h2>Category</h2>
     </div>
     <nav class="nav flex-column text-start flex-grow-1">
         <a href="#education" class="nav-link">
@@ -41,7 +41,6 @@
 
 <div class="content flex-grow-1 p-4">
     
-    <!-- Top Header -->
     <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
         <div class="d-flex align-items-center gap-2 flex-grow-1 me-3"> 
             <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
@@ -98,13 +97,13 @@
                 @forelse(($booksByCategory->get($slug) ?? collect()) as $book)
                     <div class="col-12 col-sm-6 col-md-3 mb-4">
                         <div class="card card-wrapper shadow dashboard-card h-100" style="position: relative;">
-                            <span class="badge-status badge-completed text-white">Copies: {{ $book->copies }}</span>
+                            <span class="badge-status badge bg-success text-white">Copies: {{ $book->copies }}</span>
                             <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
                                 <img src="{{ $book->coverUrl() ?? 'https://placehold.co/300x420?text=No+Cover' }}" 
-                                     class="card-img-top" 
-                                     alt="{{ $book->title }}"
-                                     style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                                     onerror="this.onerror=null; this.src='https://placehold.co/300x420?text=No+Cover';" />
+                                             class="card-img-top" 
+                                             alt="{{ $book->title }}"
+                                             style="width: 100%; height: 100%; object-fit: cover; display: block;" 
+                                             onerror="this.onerror=null; this.src='https://placehold.co/300x420?text=No+Cover';" />
                             </div>
                             <div class="card-body p-2">
                                 <h5 class="card-title mb-1 text-truncate">{{ $book->title }}</h5>
@@ -153,7 +152,6 @@
     @endforeach
 
 </div> 
-
 <!-- Reserve Book Modal -->
 <div class="modal fade" id="reserveBookModal" tabindex="-1" aria-labelledby="reserveBookModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -228,7 +226,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" id="confirmReservationBtn">
+                    <button type="submit" class="btn btn-success">
                         <i class="fas fa-bookmark me-2"></i> Confirm Reservation
                     </button>
                 </div>
@@ -239,21 +237,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    /**
-     * ============================================
-     * RESERVATION FORM VALIDATION & HANDLING
-     * ============================================
-     */
-    
-    /**
-     * Validate reservation form before submission
-     * - Checks loan duration limits (30 days or 72 hours for faculty)
-     * - Shows confirmation dialog
-     * - Prevents submission if validation fails
-     * 
-     * @param {Event} event Form submit event
-     * @returns {boolean} false if validation fails, true if confirmed
-     */
+       // Validate form before submission
     function validateReservationForm(event) {
         const form = document.getElementById('reserveBookForm');
         const action = form.getAttribute('action') || form.action;
@@ -263,27 +247,24 @@
         console.log('Form validation:', {
             action: action,
             durationValue: durationValue,
-            durationUnit: durationUnit,
-            formMethod: form.method
+            durationUnit: durationUnit
         });
         
-        // STEP 1: Validate form action is set (prevents submission to wrong URL)
+        // Check if form action is set
         if (!action || action === '' || action === window.location.href) {
             event.preventDefault();
             alert('Error: Form action not set. Please close the modal and try again.');
-            console.error('Form action is empty or invalid:', action);
+            console.error('Form action error:', action);
             return false;
         }
         
-        // STEP 2: Validate loan duration value (must be positive integer)
+        // Validate duration
         if (!durationValue || durationValue < 1) {
             event.preventDefault();
             alert('Please enter a valid loan duration.');
             return false;
         }
         
-        // STEP 3: Enforce maximum loan duration limits for faculty
-        // faculty: max 30 days or 72 hours
         const maxAllowed = durationUnit === 'hour' ? 72 : 30;
         if (parseInt(durationValue) > maxAllowed) {
             event.preventDefault();
@@ -293,7 +274,7 @@
             return false;
         }
         
-        // STEP 4: Show confirmation dialog before submitting
+        // Show confirmation dialog
         const bookTitle = document.getElementById('reserveBookTitle').textContent;
         const confirmMessage = `Are you sure you want to reserve "${bookTitle}" for ${durationValue} ${durationUnit === 'hour' ? 'hour(s)' : 'day(s)'}?`;
         
@@ -306,20 +287,13 @@
         return true;
     }
 
-    /**
-     * ============================================
-     * RESERVE BOOK MODAL HANDLING
-     * ============================================
-     * Handles opening the reservation modal and populating it with book data
-     */
     document.addEventListener('DOMContentLoaded', function() {
+        // Reserve Book Modal
         const reserveButtons = document.querySelectorAll('.reserve-book-btn');
         const reserveForm = document.getElementById('reserveBookForm');
         
-        // Attach click handler to all "Reserve" buttons
         reserveButtons.forEach(button => {
             button.addEventListener('click', function() {
-                // STEP 1: Extract book data from button's data attributes
                 const bookId = this.getAttribute('data-book-id');
                 const title = this.getAttribute('data-book-title');
                 const author = this.getAttribute('data-book-author');
@@ -329,7 +303,7 @@
                 const publisher = this.getAttribute('data-book-publisher');
                 const category = this.getAttribute('data-book-category');
                 
-                // STEP 2: Check if user already has a reservation for this book (AJAX call)
+                // Check if user already has a reservation for this book
                 fetch(`/faculty/books/${bookId}/check-reservation`, {
                     method: 'GET',
                     headers: {
@@ -391,7 +365,6 @@
         });
         
         // Add direct submit handler
-        const reserveForm = document.getElementById('reserveBookForm');
         if (reserveForm) {
             reserveForm.addEventListener('submit', function(e) {
                 console.log('Form submit event triggered');
@@ -406,7 +379,7 @@
             });
         }
 
-        // Search functionality for books
+        // Search functionality for books (unchanged)
         const searchBookInput = document.getElementById('searchBookInput');
         if (searchBookInput) {
             searchBookInput.addEventListener('input', function() {
@@ -438,4 +411,3 @@
 </script>
 </body>
 </html>
-

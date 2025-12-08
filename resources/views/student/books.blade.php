@@ -93,7 +93,7 @@
                 {{-- **CHANGE HERE: Simplified col classes for consistency with 4 per row** --}}
                 <div class="col mb-4">
                     <div class="card card-wrapper position-relative dashboard-card shadow">
-                        <span class="badge-status badge-completed">Copies: {{ $book->copies }}</span>
+                        <span class="badge-status badge-completed text-white">Copies: {{ $book->copies }}</span>
                         <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
                             <img src="{{ $book->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
                                  class="card-img-top" 
@@ -148,7 +148,7 @@
                 {{-- **CHANGE HERE: Simplified col classes for consistency with 4 per row** --}}
                 <div class="col mb-4">
                     <div class="card card-wrapper position-relative dashboard-card shadow">
-                        <span class="badge-status badge-completed">NEW</span>
+                        <span class="badge-status badge-completed text-white">Views: {{ $ebook->views }}</span>
                         <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
                             <img src="{{ $ebook->coverUrl() ?? Vite::asset('resources/images/bookcover3.jpg') }}" 
                                  class="card-img-top" 

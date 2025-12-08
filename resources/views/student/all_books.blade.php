@@ -15,7 +15,7 @@
 
 <div class="sidebar d-flex flex-column">
     <div class="text-center mb-4 profile-info">
-      <h2>Category</h2>
+        <h2>Category</h2>
     </div>
     <nav class="nav flex-column text-start flex-grow-1">
         <a href="#education" class="nav-link">
@@ -41,7 +41,6 @@
 
 <div class="content flex-grow-1 p-4">
     
-    <!-- Top Header -->
     <div class="top-header d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
         <div class="d-flex align-items-center gap-2 flex-grow-1 me-3"> 
             <label for="sidebar-toggle" class="toggle-btn d-lg-none">☰</label>
@@ -53,7 +52,7 @@
 
         <div class="d-flex align-items-center gap-2">
             <div class="d-flex flex-column text-end">
-                <span class="fw-bold text-success d-block">Library MS</span> 
+                <span class="fw-bold text-primary d-block">Library MS</span> 
                 <small class="text-muted" style="font-size:0.85rem;">Management System</small>
             </div>
             <img src="{{ Vite::asset('resources/images/dnsc_logo.png') }}" alt="DNSC Logo" style="height:50px;">
@@ -101,10 +100,10 @@
                             <span class="badge-status badge-completed text-white">Copies: {{ $book->copies }}</span>
                             <div style="width: 100%; height: 220px; overflow: hidden; background-color: #f0f0f0;">
                                 <img src="{{ $book->coverUrl() ?? 'https://placehold.co/300x420?text=No+Cover' }}" 
-                                     class="card-img-top" 
-                                     alt="{{ $book->title }}"
-                                     style="width: 100%; height: 100%; object-fit: cover; display: block;" 
-                                     onerror="this.onerror=null; this.src='https://placehold.co/300x420?text=No+Cover';" />
+                                            class="card-img-top" 
+                                            alt="{{ $book->title }}"
+                                            style="width: 100%; height: 100%; object-fit: cover; display: block;" 
+                                            onerror="this.onerror=null; this.src='https://placehold.co/300x420?text=No+Cover';" />
                             </div>
                             <div class="card-body p-2">
                                 <h5 class="card-title mb-1 text-truncate">{{ $book->title }}</h5>
@@ -119,7 +118,7 @@
                                             <i class="fas fa-check-circle me-2"></i> Already Reserved
                                         </button>
                                     @else
-                                        <button class="btn btn-sm btn-outline-success w-100 reserve-book-btn" 
+                                        <button class="btn btn-sm btn-outline-primary w-100 reserve-book-btn" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#reserveBookModal"
                                                 data-book-id="{{ $book->id }}"
@@ -154,13 +153,12 @@
 
 </div> 
 
-<!-- Reserve Book Modal -->
 <div class="modal fade" id="reserveBookModal" tabindex="-1" aria-labelledby="reserveBookModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="reserveBookModalLabel">
-                    <i class="fas fa-bookmark me-2 text-success"></i> Reserve Book
+                    <i class="fas fa-bookmark me-2 text-primary"></i> Reserve Book
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -178,7 +176,7 @@
                             </p>
                             <p class="mb-2">
                                 <i class="fas fa-copy me-2"></i><strong>Available Copies:</strong> 
-                                <span class="badge bg-success" id="reserveBookCopies"></span>
+                                <span class="badge bg-primary" id="reserveBookCopies"></span>
                             </p>
                             <p class="mb-2" id="reserveBookIsbnContainer" style="display: none;">
                                 <i class="fas fa-barcode me-2"></i><strong>ISBN:</strong> <span id="reserveBookIsbn"></span>
@@ -228,7 +226,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success" id="confirmReservationBtn">
+                    <button type="submit" class="btn btn-primary" id="confirmReservationBtn" disabled>
                         <i class="fas fa-bookmark me-2"></i> Confirm Reservation
                     </button>
                 </div>
@@ -250,13 +248,13 @@
      * - Checks loan duration limits (30 days or 72 hours for students)
      * - Shows confirmation dialog
      * - Prevents submission if validation fails
-     * 
      * @param {Event} event Form submit event
      * @returns {boolean} false if validation fails, true if confirmed
      */
     function validateReservationForm(event) {
         const form = document.getElementById('reserveBookForm');
-        const action = form.getAttribute('action') || form.action;
+        // Retrieve action using getAttribute for maximum compatibility with dynamic setting
+        const action = form.getAttribute('action') || form.action; 
         const durationValue = document.getElementById('loanDurationValue').value;
         const durationUnit = document.querySelector('[name="loan_duration_unit"]').value;
         
@@ -267,10 +265,10 @@
             formMethod: form.method
         });
         
-        // STEP 1: Validate form action is set (prevents submission to wrong URL)
-        if (!action || action === '' || action === window.location.href) {
+        // STEP 1: Validate form action is set (This check is the key safety net to prevent POST to /books/all)
+        if (!action || action === '' || action.includes('/books/all')) {
             event.preventDefault();
-            alert('Error: Form action not set. Please close the modal and try again.');
+            alert('Error: Form action not set correctly. Please refresh the page and try again.');
             console.error('Form action is empty or invalid:', action);
             return false;
         }
@@ -315,6 +313,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         const reserveButtons = document.querySelectorAll('.reserve-book-btn');
         const reserveForm = document.getElementById('reserveBookForm');
+        // New line: Get the submit button reference
+        const submitBtn = document.getElementById('confirmReservationBtn'); 
         
         // Attach click handler to all "Reserve" buttons
         reserveButtons.forEach(button => {
@@ -329,6 +329,14 @@
                 const publisher = this.getAttribute('data-book-publisher');
                 const category = this.getAttribute('data-book-category');
                 
+                // MODIFICATION 2: Disable the submit button immediately upon opening the modal 
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                }
+
+                // CRITICAL FIX: Construct the URL directly to avoid PHP helper rendering failure
+                const actionUrl = `/student/books/${bookId}/reserve`;
+
                 // STEP 2: Check if user already has a reservation for this book (AJAX call)
                 fetch(`/student/books/${bookId}/check-reservation`, {
                     method: 'GET',
@@ -346,11 +354,11 @@
                         if (modal) {
                             modal.hide();
                         }
-                        return;
+                        // Button remains disabled if modal is closed
+                        return; 
                     }
                     
-                    // Set form action
-                    const actionUrl = '{{ route("student.books.reserve", ":id") }}'.replace(':id', bookId);
+                    // A. Set form action upon successful check
                     reserveForm.setAttribute('action', actionUrl);
                     
                     // Populate modal fields
@@ -379,34 +387,42 @@
                         document.getElementById('reserveBookPublisherContainer').style.display = 'none';
                     }
                     
+                    // MODIFICATION 3A: Enable button after successful check and action set
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                    }
+                    
                     console.log('Modal opened for book:', { bookId, title, actionUrl });
                 })
                 .catch(error => {
                     console.error('Error checking reservation:', error);
-                    // Continue with modal opening even if check fails
-                    const actionUrl = '{{ route("student.books.reserve", ":id") }}'.replace(':id', bookId);
+                    // B. SET FORM ACTION ON FAILURE: Ensures form action is always set correctly, even if check fails
                     reserveForm.setAttribute('action', actionUrl);
+                    
+                    // Populate modal fields on error (for visual stability)
+                    document.getElementById('reserveBookTitle').textContent = title;
+                    document.getElementById('reserveBookAuthor').textContent = author;
+                    document.getElementById('reserveBookCopies').textContent = copies;
+                    document.getElementById('reserveBookCategory').textContent = category.charAt(0).toUpperCase() + category.slice(1);
+                    document.getElementById('reserveBookCover').src = cover;
+                    
+                    // MODIFICATION 3B: Enable button after action is set, even on error
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                    }
                 });
             });
         });
         
-        // Add direct submit handler
-        const reserveForm = document.getElementById('reserveBookForm');
+        // Add direct submit handler (for logging purposes, validation is handled by onsubmit)
+        // This remains unchanged and is fine.
         if (reserveForm) {
             reserveForm.addEventListener('submit', function(e) {
-                console.log('Form submit event triggered');
-                const action = this.action;
-                if (!action || action === '' || action === window.location.href) {
-                    e.preventDefault();
-                    alert('Error: Cannot submit form. Form action is not set correctly.');
-                    console.error('Form action error:', action);
-                    return false;
-                }
-                console.log('Form submitting to:', action);
+                console.log('Final form check before submission:', this.action);
             });
         }
 
-        // Search functionality for books
+        // Search functionality for books (unchanged)
         const searchBookInput = document.getElementById('searchBookInput');
         if (searchBookInput) {
             searchBookInput.addEventListener('input', function() {
@@ -438,4 +454,3 @@
 </script>
 </body>
 </html>
-
