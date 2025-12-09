@@ -2,7 +2,7 @@
 
 A comprehensive Laravel-based Library Management System designed for educational institutions to manage books, ebooks, reservations, and user accounts efficiently.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Features](#features)
 - [Technology Stack](#technology-stack)
@@ -14,7 +14,7 @@ A comprehensive Laravel-based Library Management System designed for educational
 - [Usage](#usage)
 - [Development](#development)
 
-## ✨ Features
+##  Features
 
 ### Core Functionality
 - **Book Management**: Add, edit, and manage physical books with ISBN, publisher, category, and cover images
@@ -31,7 +31,7 @@ A comprehensive Laravel-based Library Management System designed for educational
 - **Faculty**: Browse and reserve books, view ebooks
 - **Student**: Browse and reserve books, view ebooks, manage profile
 
-## 🛠 Technology Stack
+##  Technology Stack
 
 - **Backend**: Laravel 9.19
 - **Frontend**: Vue.js 3, Bootstrap 5, Chart.js
@@ -39,7 +39,7 @@ A comprehensive Laravel-based Library Management System designed for educational
 - **Database**: MySQL
 - **PHP**: 8.0.2+
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 Laravel-Lms/
@@ -80,7 +80,7 @@ Laravel-Lms/
         └── public/               # Public file storage (book covers, ebooks)
 ```
 
-## 🚀 Installation
+##  Installation
 
 ### Prerequisites
 - PHP >= 8.0.2
@@ -144,7 +144,7 @@ php artisan serve
 
 Visit `http://localhost:8000` in your browser.
 
-## ⚙️ Configuration
+##  Configuration
 
 ### Environment Variables
 
@@ -199,7 +199,7 @@ php artisan migrate
 php artisan db:seed
 ```
 
-## 👥 User Roles
+##  User Roles
 
 ### Admin
 - Approve/reject user registrations
@@ -235,7 +235,7 @@ php artisan db:seed
 - View announcements
 - Manage profile
 
-## 📖 Usage
+##  Usage
 
 ### Creating Your First Admin Account
 
@@ -295,14 +295,14 @@ The project follows PSR-12 coding standards. Use Laravel Pint:
 ./vendor/bin/pint
 ```
 
-## 📝 Notes
+##  Notes
 
 - All user accounts require admin approval before login
 - Book covers and ebook files are stored in `storage/app/public/`
 - Session driver is set to 'file' by default
 - The system uses role-based middleware for access control
 
-## 🤝 Contributing
+##  Contributing
 
 1. Follow PSR-12 coding standards
 2. Use camelCase for variables and methods
@@ -310,11 +310,11 @@ The project follows PSR-12 coding standards. Use Laravel Pint:
 4. Keep routes organized by role
 5. Write descriptive commit messages
 
-## 📄 License
+##  License
 
 This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-## 🆘 Support
+## Support
 
 For issues or questions, please check:
 - Laravel Documentation: https://laravel.com/docs
@@ -322,4 +322,4 @@ For issues or questions, please check:
 
 ---
 
-**Built with ❤️ using Laravel & Vue.js**
+**Built with  using Laravel & Vue.js**

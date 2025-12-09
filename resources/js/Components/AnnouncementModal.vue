@@ -100,7 +100,7 @@
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-sidebar" :disabled="loading">
+                        <button type="submit" class="btn btn-sidebar btn-outline-success" :disabled="loading">
                             <span v-if="loading" class="spinner-border spinner-border-sm me-2" role="status"></span>
                             <i v-else class="fas fa-paper-plane me-2"></i>
                             {{ loading ? 'Posting...' : 'Post Announcement' }}
